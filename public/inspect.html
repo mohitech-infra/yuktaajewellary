@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Inspect Jewellery</title>
+  <style>
+    body { font-family: sans-serif; background: #faf8f5; color: #333; margin: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+    .card { background: white; border: 1px solid #ddd; padding: 10px; border-radius: 8px; text-align: center; }
+    img { max-width: 100%; height: 250px; object-fit: contain; border-radius: 4px; background: #eee; }
+    h3 { margin: 10px 0 5px; }
+    p { font-size: 12px; color: #666; margin: 0; }
+    .nav { margin-bottom: 20px; }
+    .nav button { padding: 8px 16px; margin-right: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Inspect Jewellery Images</h1>
+  <div class="nav" id="nav-buttons"></div>
+  <div class="grid" id="image-grid"></div>
+
+  <script>
+    const totalImages = 75;
+    const itemsPerPage = 15;
+    let currentPage = 0;
+
+    function renderPage(page) {
+      currentPage = page;
+      const grid = document.getElementById('image-grid');
+      grid.innerHTML = '';
+      
+      const start = page * itemsPerPage;
+      const end = Math.min(start + itemsPerPage, totalImages);
+      
+      for (let i = start; i < end; i++) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        
+        const img = document.createElement('img');
+        img.src = `/assets/jewel_${i}.jpeg`;
+        img.alt = `Jewel ${i}`;
+        
+        const title = document.createElement('h3');
+        title.innerText = `Image jewel_${i}.jpeg`;
+        
+        card.appendChild(img);
+        card.appendChild(title);
+        grid.appendChild(card);
+      }
+    }
+
+    const nav = document.getElementById('nav-buttons');
+    const numPages = Math.ceil(totalImages / itemsPerPage);
+    for (let p = 0; p < numPages; p++) {
+      const btn = document.createElement('button');
+      btn.innerText = `Page ${p+1}`;
+      btn.onclick = () => renderPage(p);
+      nav.appendChild(btn);
+    }
+
+    renderPage(0);
+  </script>
+</body>
+</html>

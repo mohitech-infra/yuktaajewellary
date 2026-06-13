@@ -1,0 +1,167 @@
+import React, { useState, useEffect } from 'react';
+import CalendarWidget from '../components/CalendarWidget';
+import ProductCard from '../components/ProductCard';
+import CarouselWrapper from '../components/CarouselWrapper';
+
+export default function ProductView({ productId, products, onOpenBookingModal }) {
+  const product = products.find((p) => p.id === productId) || products[0];
+
+  const [selectedImage, setSelectedImage] = useState(product.img);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [activeThumb, setActiveThumb] = useState(0);
+
+  // Reset states when product changes
+  useEffect(() => {
+    setSelectedImage(product.img);
+    setSelectedDate('');
+    setActiveThumb(0);
+  }, [productId, product]);
+
+  const thumbs = (product.images && product.images.length > 0)
+    ? product.images.map((imgUrl, idx) => ({
+        label: idx === 0 ? 'Main Set' : idx === 1 ? 'Earrings View' : `Detail Angle ${idx}`,
+        url: imgUrl
+      }))
+    : [
+        { label: 'Main Set', url: product.img },
+        { label: 'Earrings View', url: '/assets/jewel_14.jpeg' },
+        { label: 'Close-up Details', url: '/assets/jewel_15.jpeg' },
+      ];
+
+  const handleThumbClick = (url, index) => {
+    setSelectedImage(url);
+    setActiveThumb(index);
+  };
+
+  const handleWhatsAppEnquiry = () => {
+    let message = `Hi Varsha! I am interested in renting the "${product.name}" from your Goregaon boutique.`;
+    if (selectedDate) {
+      message += ` I'd like to check its availability for my event on ${selectedDate}.`;
+    }
+    const encodedMsg = encodeURIComponent(message);
+    window.open(`https://wa.me/919987600673?text=${encodedMsg}`, '_blank');
+  };
+
+  // Recommendations: filter out current product, take first 3
+  const recommendations = products.filter((p) => p.id !== product.id).slice(0, 3);
+
+  return (
+    <div>
+      <section className="section-padding">
+        <div className="container">
+          {/* Back Link */}
+          <a
+            href="#collection"
+            className="view-all-link"
+            style={{ marginBottom: '2.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textAlign: 'left' }}
+          >
+            <i className="fa-solid fa-arrow-left"></i> Back to Collection
+          </a>
+
+          {/* Main Layout */}
+          <div className="product-detail-layout" id="product-detail-wrapper">
+            {/* Left: Gallery Layout */}
+            <div className="gallery-container fade-up-element visible">
+              <div className="gallery-main">
+                <div
+                  className="gallery-main-placeholder"
+                  id="main-gallery-view"
+                  style={{
+                    backgroundImage: `url('${selectedImage}')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    height: '100%',
+                    width: '100%',
+                  }}
+                >
+                  {/* Main Display */}
+                </div>
+              </div>
+              <div className="gallery-thumbs">
+                {thumbs.map((t, idx) => (
+                  <div
+                    key={idx}
+                    className={`gallery-thumb ${activeThumb === idx ? 'active' : ''}`}
+                    onClick={() => handleThumbClick(t.url, idx)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {t.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Information & Calendar */}
+            <div className="prod-info-panel fade-up-element visible">
+              <span className="prod-badge">Available to Rent</span>
+              <h1 className="prod-title">{product.name}</h1>
+
+              <div className="prod-occ-tags">
+                {product.occasions.map((occ) => (
+                  <span key={occ} className="prod-occ-tag">
+                    {occ}
+                  </span>
+                ))}
+              </div>
+
+              <div className="prod-price-box">
+                <div className="prod-price-box-label">Rental Price (Per Occasion)</div>
+                <div className="prod-price-box-val">₹{product.price.toLocaleString('en-IN')}</div>
+              </div>
+
+              <h4 className="prod-desc-title">Description</h4>
+              <p className="prod-desc-text">{product.description}</p>
+
+              <div className="prod-specs">
+                <div className="spec-item">
+                  <span className="spec-label">Materials</span>
+                  <span className="spec-val">{product.materials}</span>
+                </div>
+                <div className="spec-item">
+                  <span className="spec-label">Set Includes</span>
+                  <span className="spec-val">{product.includes}</span>
+                </div>
+              </div>
+
+              {/* Interactive Calendar widget */}
+              <CalendarWidget
+                product={product}
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+              />
+
+              {/* Action buttons */}
+              <div className="prod-actions">
+                <button
+                  className="btn btn-primary btn-shimmer"
+                  onClick={() => onOpenBookingModal(product.id, selectedDate)}
+                >
+                  Book This Set
+                </button>
+                <button className="btn btn-whatsapp-large btn" onClick={handleWhatsAppEnquiry}>
+                  <i className="fa-brands fa-whatsapp" style={{ marginRight: '0.5rem', fontSize: '1.1rem' }}></i>{' '}
+                  WhatsApp to Enquire
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Recommendations Grid */}
+          <div style={{ marginTop: '6rem' }} className="fade-up-element visible">
+            <h2 className="brand-font" style={{ fontSize: '2.5rem', marginBottom: '2rem' }}>
+              You May Also Like
+            </h2>
+            <CarouselWrapper
+              items={recommendations}
+              desktopGridClass="catalog-grid"
+              autoScrollInterval={0}
+              renderItem={(p, index, isActive) => (
+                <ProductCard key={p.id} product={p} isActive={isActive} />
+              )}
+            />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

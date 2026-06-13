@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+dist/
+
+# Env files
+.env.local
+.env
+
+# Editor
+.idea
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Kilo config
+skills-lock.json
+.agents/

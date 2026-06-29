@@ -41,11 +41,12 @@ export default function ProductCard({ product, isActive, className = '' }) {
         <div
           className="card-placeholder"
           style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.15)), url('${product.img}')`,
+            backgroundImage: isVisible ? `linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.15)), url('${product.img}')` : 'none',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             height: '100%',
             width: '100%',
+            backgroundColor: 'var(--color-accent-light)',
           }}
         >
           {/* Cover image via style */}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { gsap } from 'gsap';
 import ProductCard from '../components/ProductCard';
 import CarouselWrapper from '../components/CarouselWrapper';
+import OfferEnvelope from '../components/OfferEnvelope';
 
 export default function HomeView({ products, onOpenBookingModal }) {
   // Slices for lists
@@ -125,10 +126,14 @@ export default function HomeView({ products, onOpenBookingModal }) {
               <span className="slide-subtitle">Exclusive. Elegant. Yours for a Day.</span>
               <h1 className="slide-title heading-xl">Wear the Extraordinary</h1>
               <p className="slide-desc">Exclusive designer jewellery rentals for your most beautiful moments.</p>
-              <div className="slide-actions">
+              <div className="slide-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <button className="btn btn-accent btn-shimmer" onClick={() => onOpenBookingModal("")}>
                   Book Your Slot
                 </button>
+                <a href="#wallet" className="btn" style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fa-solid fa-gift" style={{ color: '#ffd700' }}></i>
+                  Claim ₹2,000 Voucher
+                </a>
               </div>
             </div>
           </div>
@@ -149,9 +154,13 @@ export default function HomeView({ products, onOpenBookingModal }) {
               <span className="slide-subtitle">Boutique Jewellery Rental</span>
               <h1 className="slide-title heading-xl">Your Day. Our Jewellery.</h1>
               <p className="slide-desc">Bridal, festive, and occasion jewellery — available to rent from our Goregaon West boutique.</p>
-              <div className="slide-actions">
+              <div className="slide-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <a href="#collection" className="btn btn-accent btn-shimmer">
                   Explore Collection
+                </a>
+                <a href="#wallet" className="btn" style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fa-solid fa-gift" style={{ color: '#ffd700' }}></i>
+                  Claim ₹2,000 Voucher
                 </a>
               </div>
             </div>
@@ -344,6 +353,9 @@ export default function HomeView({ products, onOpenBookingModal }) {
           </div>
         </div>
       </section>
+
+      {/* Exclusive Welcome Offer (Gift Envelope) */}
+      <OfferEnvelope />
 
       {/* Most Loved Sets */}
       <section

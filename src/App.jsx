@@ -15,6 +15,7 @@ import HowItWorksView from './views/HowItWorksView';
 import LookbookView from './views/LookbookView';
 import ContactView from './views/ContactView';
 import AdminView from './views/AdminView';
+import WalletView from './views/WalletView';
 
 export default function App() {
   const [route, setRoute] = useState('home');
@@ -66,6 +67,8 @@ export default function App() {
     }
     return [];
   });
+
+  const [leads, setLeads] = useState([]);
 
   // Sync state changes with localStorage (Client-side offline cache)
   useEffect(() => {
@@ -134,6 +137,16 @@ export default function App() {
           }));
           setBookings(parsedBookings);
         }
+
+        // 4. Fetch live leads
+        const { data: dbLeads, error: leadsError } = await supabase
+          .from('leads')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!leadsError && dbLeads) {
+          setLeads(dbLeads);
+        }
       } catch (err) {
         console.warn('Supabase initialization warning or offline mode. Using Local Cache.', err);
       }
@@ -163,9 +176,16 @@ export default function App() {
   }, []);
 
   const handleOpenBookingModal = (productId = '', date = '') => {
-    setBookingProductId(productId);
-    setBookingInitialDate(date);
-    setBookingModalOpen(true);
+    let message = '';
+    if (productId) {
+      const product = products.find((p) => p.id === productId);
+      const name = product ? product.name : productId;
+      message = `Hi Varsha! I am interested in renting the "${name}" from your Goregaon boutique.`;
+    } else {
+      message = `Hi Varsha! I would like to book a slot for a jewellery viewing / consultation at your Goregaon West boutique.`;
+    }
+    const encodedMsg = encodeURIComponent(message);
+    window.open(`https://wa.me/919987600673?text=${encodedMsg}`, '_blank');
   };
 
   const handleCloseBookingModal = () => {
@@ -242,6 +262,8 @@ export default function App() {
         return <LookbookView />;
       case 'contact':
         return <ContactView />;
+      case 'wallet':
+        return <WalletView />;
       case 'admin':
         return (
           <AdminView
@@ -251,6 +273,8 @@ export default function App() {
             setOccasionsMeta={setOccasionsMeta}
             bookings={bookings}
             dbMode={dbMode}
+            leads={leads}
+            setLeads={setLeads}
           />
         );
       default:

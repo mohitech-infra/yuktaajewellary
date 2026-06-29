@@ -2975,24 +2975,68 @@ textarea.form-input {
   overflow-y: auto;
 }
 
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.responsive-auto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 2rem;
+}
+
+.admin-auth-container {
+  width: 100%;
+  max-width: 420px;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-premium);
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.admin-mobile-header {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .admin-dashboard-container {
     flex-direction: column !important;
   }
   
+  /* NEW: App-like Bottom Navigation Bar */
   .admin-sidebar {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
     width: 100% !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    height: 70px !important;
+    flex-direction: row !important;
+    z-index: 1000 !important;
+    padding: 0 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.2) !important;
   }
   
-  /* Make sidebar tabs scrollable horizontally on mobile */
+  /* Hide desktop header and footer in sidebar on mobile */
+  .admin-sidebar-header,
+  .admin-sidebar-footer {
+    display: none !important;
+  }
+
   .admin-sidebar-menu {
     display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
     overflow-x: auto !important;
     white-space: nowrap !important;
-    padding: 0.5rem !important;
+    padding: 0 !important;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    align-items: stretch !important;
   }
   
   .admin-sidebar-menu::-webkit-scrollbar {
@@ -3001,19 +3045,61 @@ textarea.form-input {
   
   .admin-sidebar-menu button {
     flex: 0 0 auto !important;
-    padding: 0.8rem 1.2rem !important;
+    width: auto !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0.5rem 1.2rem !important;
     border-left: none !important;
-    border-bottom: 3px solid transparent !important;
+    border-bottom: none !important;
+    font-size: 0.65rem !important;
+    gap: 0.3rem !important;
+    min-width: 75px !important;
+  }
+  
+  .admin-sidebar-menu button i {
+    font-size: 1.1rem !important;
+    margin-bottom: 2px !important;
   }
   
   .admin-sidebar-menu button[style*="background: rgba"] {
-    border-bottom: 3px solid var(--color-accent) !important;
-  }
-
-  .admin-content-area {
-    padding: 1.5rem 1rem !important;
+    background: transparent !important;
+    color: var(--color-accent) !important;
+    border-bottom: none !important;
   }
   
+  /* NEW: Mobile Header fixed at top */
+  .admin-mobile-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: var(--color-primary);
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Padding adjustments to prevent content hiding behind fixed navs */
+  .admin-content-area {
+    padding: 75px 1rem 90px 1rem !important;
+  }
+  
+  /* Responsive Grids & Auth Padding */
+  .admin-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-auth-container {
+    padding: 1.5rem !important;
+    margin: 1rem;
+    max-width: calc(100% - 2rem) !important;
+  }
+
   /* Quick action buttons sizing */
   .admin-card button {
     font-size: 0.85rem !important;
@@ -3214,6 +3300,709 @@ textarea.form-input {
     border-color: var(--color-accent) !important;
     box-shadow: 0 10px 25px rgba(var(--color-accent-rgb), 0.3) !important;
   }
+}
+
+/* --- Creative Shagun Gift Envelope Offer Section --- */
+.offer-section {
+  background: radial-gradient(circle at center, #42112e 0%, #250619 100%);
+  padding: 6rem 0;
+  border-top: 2px solid var(--color-accent);
+  border-bottom: 2px solid var(--color-accent);
+  text-align: center;
+  color: var(--color-white);
+  overflow: hidden;
+  position: relative;
+}
+
+.offer-container {
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 5;
+}
+
+.offer-tag {
+  color: var(--color-accent);
+  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-size: 0.85rem;
+  display: block;
+  margin-bottom: 0.8rem;
+}
+
+.offer-title {
+  color: var(--color-white);
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.offer-desc {
+  color: #ebd1df;
+  font-size: 1.1rem;
+  margin-bottom: 3.5rem;
+  line-height: 1.6;
+}
+
+/* Envelope Container */
+.envelope-wrapper {
+  perspective: 1000px;
+  width: 320px;
+  height: 200px;
+  margin: 0 auto 3rem;
+  position: relative;
+  cursor: pointer;
+}
+
+.envelope {
+  width: 100%;
+  height: 100%;
+  background: #c82333; /* Deep crimson luxury envelope background */
+  border-radius: 0 0 10px 10px;
+  position: relative;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
+}
+
+/* Gold decorative border on envelope */
+.envelope::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: 0 0 8px 8px;
+  pointer-events: none;
+}
+
+/* Flap of the envelope */
+.envelope-flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 160px solid transparent;
+  border-right: 160px solid transparent;
+  border-top: 100px solid #a71b29; /* Darker red */
+  transform-origin: top;
+  transition: transform 0.4s ease 0.2s, z-index 0.1s ease 0.2s;
+  z-index: 4;
+}
+
+.envelope-flap::after {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: -160px;
+  width: 0;
+  height: 0;
+  border-left: 160px solid transparent;
+  border-right: 160px solid transparent;
+  border-top: 96px solid rgba(212, 175, 55, 0.8); /* Gold accent line on flap */
+  transform-origin: top;
+}
+
+/* Opened state of flap */
+.envelope-wrapper.open .envelope-flap {
+  transform: rotateX(180deg);
+  z-index: 1;
+  transition: transform 0.4s ease, z-index 0.1s ease 0.1s;
+}
+
+/* Front elements of the envelope overlaying the letter when closed */
+.envelope-front-pocket {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 160px solid #d42c3d;
+  border-right: 160px solid #d42c3d;
+  border-bottom: 100px solid #b81e2e;
+  border-radius: 0 0 10px 10px;
+  z-index: 3;
+}
+
+/* Seal of the envelope */
+.envelope-seal {
+  position: absolute;
+  top: 80px;
+  left: 140px;
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle, #ffd700 0%, #b89326 100%);
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #501b3a;
+  font-weight: bold;
+  font-size: 0.85rem;
+  border: 2px solid #fff;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.envelope-seal i {
+  font-size: 1.1rem;
+  animation: pulse 1.8s infinite;
+}
+
+.envelope-wrapper.open .envelope-seal {
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The insert letter inside the envelope */
+.letter {
+  position: absolute;
+  left: 15px;
+  bottom: 5px;
+  width: 290px;
+  height: 180px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1) 0.3s;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  border: 2px double var(--color-accent);
+}
+
+.envelope-wrapper.open .letter {
+  transform: translateY(-110px);
+  z-index: 3;
+}
+
+.letter-title {
+  font-family: var(--font-serif);
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: var(--color-primary);
+  margin-bottom: 0.2rem;
+}
+
+.letter-amount {
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.letter-code-tag {
+  background-color: var(--color-accent-light);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Claim Form Styles */
+.claim-form-wrapper {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  transition: all 0.5s ease;
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
+}
+
+.claim-form-wrapper.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+  height: auto;
+  margin-top: 1rem;
+}
+
+.claim-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.claim-input {
+  padding: 0.9rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-white);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  transition: var(--transition-fast);
+}
+
+.claim-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.claim-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Confetti styling */
+.confetti-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10;
+  animation: fall 3s linear forwards;
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(-50px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(500px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.6);
+  }
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(212, 175, 55, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
+  }
+}
+
+/* --- Wallet Navbar Pill Styles --- */
+.wallet-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  border: 1px solid var(--color-accent);
+}
+
+.wallet-pill.claimed {
+  background: var(--color-accent-light);
+  color: var(--color-primary);
+}
+
+.wallet-pill.unclaimed {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #b89326 100%);
+  color: #501b3a;
+  box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3);
+  animation: pulse-gold 2s infinite;
+}
+
+.wallet-pill:hover {
+  transform: translateY(-2px);
+}
+
+.wallet-mobile-text {
+  display: none;
+}
+
+@keyframes pulse-gold {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 4px 18px rgba(212, 175, 55, 0.5);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3);
+  }
+}
+
+.wallet-pill.unclaimed i {
+  animation: bounce-gift 0.8s infinite alternate;
+}
+
+@keyframes bounce-gift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+/* Mobile responsive details for wallet */
+@media (max-width: 480px) {
+  .wallet-waiting-text {
+    display: none !important;
+  }
+  .wallet-mobile-text {
+    display: inline !important;
+  }
+  .wallet-pill {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8rem;
+    gap: 0.3rem;
+  }
+}
+
+/* --- Wallet View Layout & Styling --- */
+.wallet-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 3rem;
+  margin-bottom: 4rem;
+}
+
+@media (max-width: 768px) {
+  .wallet-layout {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+/* Digital Card styling */
+.digital-wallet-card {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  aspect-ratio: 1.586/1; /* standard credit card ratio */
+  border-radius: 16px;
+  padding: 1.25rem;
+  color: var(--color-white);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35), 0 0 15px rgba(212, 175, 55, 0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: var(--transition-smooth);
+  border: 1.5px solid rgba(212, 175, 55, 0.45);
+}
+
+.digital-wallet-card.active-card {
+  background: linear-gradient(135deg, #501b3a 0%, #2f0b21 50%, #170410 100%);
+}
+
+.digital-wallet-card::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border: 1px dashed rgba(212, 175, 55, 0.25);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.digital-wallet-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.03) 30%,
+    rgba(212, 175, 55, 0.15) 50%,
+    rgba(255, 255, 255, 0.03) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  transition: 0.75s;
+  pointer-events: none;
+  animation: card-shimmer 6s infinite ease-in-out;
+}
+
+@keyframes card-shimmer {
+  0% { left: -150%; }
+  30% { left: 150%; }
+  100% { left: 150%; }
+}
+
+.digital-wallet-card.inactive-card {
+  background: linear-gradient(135deg, #3d3439 0%, #1e191c 100%);
+  filter: grayscale(0.5);
+  opacity: 0.8;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-brand {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--color-accent);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.card-network-chip {
+  width: 38px;
+  height: 28px;
+  background: linear-gradient(135deg, #ffe066 0%, #d4af37 40%, #b89326 100%);
+  border-radius: 5px;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 1px;
+  padding: 3px;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.5), 0 2px 4px rgba(0,0,0,0.2);
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
+.card-network-chip::before {
+  content: '';
+  grid-column: 2;
+  grid-row: 2;
+  border: 1px solid rgba(0,0,0,0.2);
+  background-color: rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+
+.card-number-mock {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.95rem;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+  margin-top: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+
+.card-balance-block {
+  margin-top: auto;
+  margin-bottom: 0.4rem;
+}
+
+.card-balance-label {
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 1.5px;
+  font-weight: bold;
+}
+
+.card-balance-amount {
+  font-family: var(--font-serif);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  line-height: 1.2;
+}
+
+.card-footer-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.card-holder-info, .card-expiry-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-holder-label {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.card-holder-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-white);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+}
+
+/* Status badge */
+.wallet-status-box {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-subtle);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+}
+
+.status-badge.active {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.pending {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  background-color: currentColor;
+}
+
+/* Right Column Sign up Card */
+.wallet-signup-card, .redemption-guide-card {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: var(--shadow-medium);
+}
+
+.form-group-wallet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  text-align: left;
+}
+
+.wallet-form-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  letter-spacing: 0.5px;
+}
+
+.wallet-form-input {
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: var(--transition-fast);
+}
+
+.wallet-form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: var(--color-white);
+}
+
+/* Redemption guide steps */
+.redemption-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  margin-top: 1.5rem;
+  text-align: left;
+}
+
+.red-step {
+  display: flex;
+  gap: 1rem;
+}
+
+.red-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--color-accent-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.red-step-content strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--color-primary);
+}
+
+.red-step-content p {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* Terms and Conditions styling */
+.wallet-terms-box {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.wallet-terms-box ul {
+  padding-left: 1.2rem;
+  list-style-type: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.wallet-terms-box li {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
 }
 
 

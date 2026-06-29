@@ -29,8 +29,18 @@ function LookbookCard({ item }) {
     <div
       ref={cardRef}
       className={`masonry-item ${isVisible ? 'card-entrance-visible' : 'card-entrance-hidden'}`}
+      style={{
+        aspectRatio: isVisible ? 'auto' : '2/3',
+        minHeight: isVisible ? 'auto' : '300px',
+      }}
     >
-      <img className="masonry-img" src={item.img} alt={`${item.name}'s ${item.occ}`} />
+      <img 
+        className="masonry-img" 
+        src={isVisible ? item.img : ''} 
+        loading="lazy" 
+        alt={`${item.name}'s ${item.occ}`} 
+        style={{ opacity: isVisible ? 1 : 0, transition: 'opacity 0.5s ease' }}
+      />
       <div className="masonry-overlay">
         <h4 className="masonry-name">{item.name}</h4>
         <span className="masonry-occ">{item.occ}</span>

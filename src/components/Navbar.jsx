@@ -3,6 +3,20 @@ import React, { useState, useEffect } from 'react';
 export default function Navbar({ currentRoute, onOpenBookingModal }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSolid, setIsSolid] = useState(false);
+  const [isClaimed, setIsClaimed] = useState(false);
+
+  useEffect(() => {
+    const checkClaimed = () => {
+      setIsClaimed(!!localStorage.getItem('yuktaa_claimed_offer'));
+    };
+    checkClaimed();
+    window.addEventListener('wallet-update', checkClaimed);
+    return () => window.removeEventListener('wallet-update', checkClaimed);
+  }, []);
+
+  const handleWalletClick = () => {
+    window.location.hash = '#wallet';
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,6 +78,27 @@ export default function Navbar({ currentRoute, onOpenBookingModal }) {
 
         {/* Right Actions (WhatsApp + Booking Button) */}
         <div className="nav-actions">
+          {/* Wallet Section */}
+          <div 
+            className={`wallet-pill ${isClaimed ? 'claimed' : 'unclaimed'}`}
+            onClick={handleWalletClick}
+            title={isClaimed ? "Your Wallet Balance" : "Click to claim ₹2,000 welcome gift"}
+            style={{ marginRight: '0.5rem' }}
+          >
+            {isClaimed ? (
+              <>
+                <i className="fa-solid fa-wallet" style={{ color: 'var(--color-accent)' }}></i>
+                <span>₹2,000</span>
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-gift"></i>
+                <span className="wallet-waiting-text">₹2,000 Waiting</span>
+                <span className="wallet-mobile-text">₹2,000</span>
+              </>
+            )}
+          </div>
+
           <a
             href="https://wa.me/919987600673?text=Hi%20Varsha,%20I%20would%20like%20to%20enquire%20about%20booking%20a%20slot%20at%20your%20boutique."
             target="_blank"

@@ -126,3 +126,20 @@ ON CONFLICT (id) DO UPDATE SET
 -- ALTER TABLE FOR MULTIPLE PHOTOS SUPPORT (RUN IF DATABASE WAS ALREADY CREATED)
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS images text[] DEFAULT '{}'::text[];
 
+-- 6. CREATE LEADS TABLE (For Shagun Wallet Sign-ups)
+CREATE TABLE IF NOT EXISTS public.leads (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  phone text NOT NULL,
+  source text DEFAULT 'Shagun Envelope',
+  created_at timestamp with time zone DEFAULT now()
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+
+-- Set Public Policies for Leads
+CREATE POLICY "Allow public insert" ON public.leads FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public read access" ON public.leads FOR SELECT USING (true);
+CREATE POLICY "Allow public update" ON public.leads FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete" ON public.leads FOR DELETE USING (true);

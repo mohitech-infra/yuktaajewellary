@@ -7,7 +7,9 @@ export default function AdminView({
   occasionsMeta,
   setOccasionsMeta,
   bookings,
-  dbMode
+  dbMode,
+  leads = [],
+  setLeads
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return sessionStorage.getItem('yuktaa_admin_auth') === 'true';
@@ -254,10 +256,13 @@ export default function AdminView({
 
   const handleProductInputChange = (e) => {
     const { name, value } = e.target;
-    setProductForm((prev) => ({
-      ...prev,
-      [name]: name === 'price' ? Number(value) : value
-    }));
+    setProductForm((prev) => {
+      const updates = { [name]: name === 'price' ? Number(value) : value };
+      if (name === 'name' && formMode === 'add') {
+        updates.id = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      }
+      return { ...prev, ...updates };
+    });
   };
 
   const handleOccasionCheckboxChange = (occasionKey) => {
@@ -578,16 +583,7 @@ export default function AdminView({
         backgroundColor: 'var(--color-bg)',
         padding: '2rem'
       }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '420px',
-          backgroundColor: 'var(--color-white)',
-          border: '1px solid var(--color-border)',
-          borderRadius: '12px',
-          boxShadow: 'var(--shadow-premium)',
-          padding: '2.5rem',
-          textAlign: 'center'
-        }}>
+        <div className="admin-auth-container">
           <div style={{
             width: '60px',
             height: '60px',
@@ -725,10 +721,20 @@ export default function AdminView({
         </div>
       )}
 
+      {/* Mobile Top Header (Hidden on Desktop) */}
+      <div className="admin-mobile-header">
+        <h2 className="brand-font" style={{ color: 'var(--color-white)', fontSize: '1.5rem', margin: 0, letterSpacing: '1px' }}>
+          YUKTAA
+        </h2>
+        <button onClick={handleLogout} style={{ background: 'transparent', border: 'none', color: '#ff9b9b', fontSize: '1.2rem', cursor: 'pointer' }}>
+          <i className="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+      </div>
+
       {/* Sidebar Navigation */}
       <div className="admin-sidebar">
         {/* Sidebar Header Logo */}
-        <div style={{
+        <div className="admin-sidebar-header" style={{
           padding: '2rem 1.5rem',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           textAlign: 'center'
@@ -748,6 +754,7 @@ export default function AdminView({
             { id: 'products', label: 'Jewellery Inventory', icon: 'fa-gem' },
             { id: 'occasions', label: 'Occasions Banner', icon: 'fa-calendar-days' },
             { id: 'bookings', label: 'Bookings & Logs', icon: 'fa-book-bookmark' },
+            { id: 'leads', label: 'Sign-ups / Leads', icon: 'fa-users' },
             { id: 'backup', label: 'Database Backup', icon: 'fa-database' },
             { id: 'settings', label: 'Security Settings', icon: 'fa-shield-halved' }
           ].map((item) => (
@@ -778,7 +785,7 @@ export default function AdminView({
         </div>
 
         {/* Sidebar Footer */}
-        <div style={{
+        <div className="admin-sidebar-footer" style={{
           padding: '1.5rem',
           borderTop: '1px solid rgba(255, 255, 255, 0.1)',
           display: 'flex',
@@ -848,12 +855,7 @@ export default function AdminView({
             </p>
 
             {/* Stat Cards */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '1.5rem',
-              marginBottom: '2.5rem'
-            }}>
+            <div className="responsive-auto-grid" style={{ marginBottom: '2.5rem' }}>
               {[
                 { title: 'Active Inventory', count: `${products.length} Sets`, desc: 'Total jewelry items', icon: 'fa-gem', bg: '#fdfcf7' },
                 { title: 'Appointments Booked', count: `${bookings.length} Slots`, desc: 'Through web scheduler', icon: 'fa-book-bookmark', bg: '#fbf8fa' },
@@ -896,7 +898,7 @@ export default function AdminView({
             </div>
 
             {/* Quick Actions & Recent Bookings */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+            <div className="responsive-auto-grid">
               {/* Quick Actions */}
               <div className="admin-card" style={{
                 backgroundColor: 'var(--color-white)',
@@ -1063,7 +1065,7 @@ export default function AdminView({
                   </h3>
                   
                   <form onSubmit={handleProductFormSubmit}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                    <div className="admin-form-grid" style={{ marginBottom: '1.5rem' }}>
                       <div className="form-group">
                         <label className="form-label">Unique Item Code *</label>
                         <input
@@ -1105,7 +1107,7 @@ export default function AdminView({
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                    <div className="admin-form-grid" style={{ marginBottom: '1.5rem' }}>
                       <div className="form-group">
                         <label className="form-label">Rental Price (₹ Per Event) *</label>
                         <input
@@ -1151,7 +1153,8 @@ export default function AdminView({
 
                      <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                       <label className="form-label">Jewellery Photos (Drag & Drop or Click to select) *</label>
-                      <div
+                      <label
+                        htmlFor="product-images-upload-input"
                         onDragOver={(e) => {
                           e.preventDefault();
                           e.currentTarget.style.borderColor = 'var(--color-primary)';
@@ -1170,7 +1173,6 @@ export default function AdminView({
                             await handleImageUploads(e.dataTransfer.files);
                           }
                         }}
-                        onClick={() => document.getElementById('product-images-upload-input').click()}
                         style={{
                           border: '2px dashed var(--color-accent)',
                           borderRadius: '8px',
@@ -1183,7 +1185,8 @@ export default function AdminView({
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '0.8rem',
-                          backgroundColor: 'rgba(107, 70, 193, 0.02)'
+                          backgroundColor: 'rgba(107, 70, 193, 0.02)',
+                          width: '100%'
                         }}
                       >
                         <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '2.2rem', color: 'var(--color-accent)' }}></i>
@@ -1205,7 +1208,7 @@ export default function AdminView({
                           }}
                           style={{ display: 'none' }}
                         />
-                      </div>
+                        </label>
 
                       {/* Upload Status */}
                       {isUploadingImages && (
@@ -1336,7 +1339,7 @@ export default function AdminView({
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                    <div className="admin-form-grid" style={{ marginBottom: '2rem' }}>
                       <div className="form-group">
                         <label className="form-label">Materials List</label>
                         <input
@@ -1478,7 +1481,7 @@ export default function AdminView({
               Edit headers, visual description writeups, and background cover banners on occasion landing collection pages.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+            <div className="responsive-auto-grid">
               {/* Editor Column */}
               {editingOccasionKey ? (
                 <div className="admin-card" style={{
@@ -1627,109 +1630,7 @@ export default function AdminView({
               Block unavailable dates for custom items, manage availability, and access client contact information.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
-              {/* Blocking panel */}
-              <div>
-                <div className="admin-card" style={{
-                  backgroundColor: 'var(--color-white)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: '10px',
-                  padding: '2rem',
-                  marginBottom: '2rem',
-                  boxShadow: 'var(--shadow-subtle)'
-                }}>
-                  <h3 className="brand-font" style={{ fontSize: '1.6rem', color: 'var(--color-primary)', marginBottom: '1.2rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-                    Block Calendar Dates
-                  </h3>
-                  
-                  <form onSubmit={handleAddBlockedDate}>
-                    <div className="form-group" style={{ marginBottom: '1.2rem' }}>
-                      <label className="form-label">Select Jewellery Set</label>
-                      <select
-                        className="form-input"
-                        required
-                        value={selectedProductForDates}
-                        onChange={(e) => setSelectedProductForDates(e.target.value)}
-                        style={{ height: '42px', borderRadius: '4px' }}
-                      >
-                        <option value="">Choose set...</option>
-                        {products.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name} ({p.category})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                      <label className="form-label">Select Date to Block</label>
-                      <input
-                        type="date"
-                        className="form-input"
-                        required
-                        value={newBlockedDate}
-                        onChange={(e) => setNewBlockedDate(e.target.value)}
-                        style={{ height: '42px', borderRadius: '4px' }}
-                      />
-                    </div>
-
-                    <button type="submit" className="btn btn-accent btn-shimmer" style={{ width: '100%', gap: '0.5rem' }}>
-                      <i className="fa-solid fa-lock"></i> Block Selected Date
-                    </button>
-                  </form>
-                </div>
-
-                {/* Blocked Dates list */}
-                <div className="admin-card" style={{
-                  backgroundColor: 'var(--color-white)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: '10px',
-                  padding: '2rem',
-                  boxShadow: 'var(--shadow-subtle)'
-                }}>
-                  <h3 className="brand-font" style={{ fontSize: '1.6rem', color: 'var(--color-primary)', marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-                    Blocked Dates Directory
-                  </h3>
-                  
-                  <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', paddingRight: '5px' }}>
-                    {products.filter((p) => p.bookedDates && p.bookedDates.length > 0).length === 0 ? (
-                      <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>
-                        No dates blocked currently.
-                      </p>
-                    ) : (
-                      products.filter((p) => p.bookedDates && p.bookedDates.length > 0).map((p) => (
-                        <div key={p.id} style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0.6rem' }}>
-                          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-primary)' }}>{p.name}</span>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.4rem' }}>
-                            {p.bookedDates.map((date) => (
-                              <span key={date} style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.3rem',
-                                fontSize: '0.75rem',
-                                backgroundColor: '#fde8e8',
-                                color: '#9b1c1c',
-                                padding: '0.2rem 0.5rem',
-                                borderRadius: '4px',
-                                fontWeight: 700
-                              }}>
-                                {date}
-                                <i
-                                  className="fa-solid fa-circle-xmark"
-                                  style={{ cursor: 'pointer', opacity: 0.8 }}
-                                  onClick={() => handleRemoveBookedDate(p.id, date)}
-                                  title="Unblock date"
-                                ></i>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-
+            <div style={{ maxWidth: '900px', margin: '0 auto', width: '100%' }}>
               {/* Bookings Feed */}
               <div className="admin-card" style={{
                 backgroundColor: 'var(--color-white)',
@@ -1830,6 +1731,79 @@ export default function AdminView({
           </div>
         )}
 
+        {/* Tab X: Sign-ups / Leads */}
+        {activeTab === 'leads' && (
+          <div className="admin-tab-content">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <div>
+                <h3 className="brand-font" style={{ fontSize: '1.8rem', color: 'var(--color-primary)' }}>Wallet Sign-ups</h3>
+                <p style={{ color: 'var(--color-text-muted)' }}>Leads collected from the Welcome Voucher Shagun envelope.</p>
+              </div>
+            </div>
+
+            <div className="admin-card" style={{ padding: '0', overflow: 'hidden' }}>
+              {!leads || leads.length === 0 ? (
+                <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                  <i className="fa-solid fa-users-slash" style={{ fontSize: '2rem', marginBottom: '1rem', color: '#cbd5e1' }}></i>
+                  <p>No leads captured yet.</p>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600 }}>Date</th>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600 }}>Name</th>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600 }}>Phone</th>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600 }}>Source</th>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leads.map((lead, idx) => (
+                        <tr key={lead.id || idx} style={{ borderBottom: '1px solid var(--color-border)', transition: 'background 0.2s' }}>
+                          <td style={{ padding: '1.2rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
+                            {new Date(lead.created_at).toLocaleDateString()}
+                          </td>
+                          <td style={{ padding: '1.2rem', fontWeight: 500, color: 'var(--color-primary)' }}>
+                            {lead.name}
+                          </td>
+                          <td style={{ padding: '1.2rem', fontSize: '0.95rem' }}>
+                            {lead.phone}
+                          </td>
+                          <td style={{ padding: '1.2rem' }}>
+                            <span style={{ backgroundColor: 'var(--color-accent-light)', color: 'var(--color-primary)', padding: '0.3rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
+                              {lead.source || 'Unknown'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '1.2rem', textAlign: 'right', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <a 
+                              href={`https://wa.me/${lead.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${lead.name.split(' ')[0]}, I saw you claimed your ₹2000 welcome voucher! Let me know if you need help browsing our collection.`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn"
+                              style={{ backgroundColor: '#25D366', borderColor: '#25D366', color: '#fff', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                            >
+                              <i className="fa-brands fa-whatsapp"></i> Chat
+                            </a>
+                            <a 
+                              href={`tel:${lead.phone.replace(/\D/g, '')}`}
+                              className="btn btn-secondary"
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                            >
+                              <i className="fa-solid fa-phone"></i> Call
+                            </a>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Tab 5: Database Backup & Restore */}
         {activeTab === 'backup' && (
           <div>
@@ -1840,7 +1814,7 @@ export default function AdminView({
               Backup catalog data files or load custom backups into the boutique browser database.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+            <div className="responsive-auto-grid">
               {/* Export panel */}
               <div className="admin-card" style={{
                 backgroundColor: 'var(--color-white)',
@@ -1873,7 +1847,7 @@ export default function AdminView({
 
                 <div style={{ marginTop: '2.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
                   <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '0.8rem' }}>Database Diagnostics</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="admin-form-grid" style={{ gap: '1rem' }}>
                     <div style={{ padding: '0.8rem', border: '1px solid var(--color-border)', borderRadius: '6px', backgroundColor: '#FAF8FA' }}>
                       <span style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--color-primary)', display: 'block' }}>{products.length}</span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Products Listed</span>

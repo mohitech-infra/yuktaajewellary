@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import CalendarWidget from '../components/CalendarWidget';
 import ProductCard from '../components/ProductCard';
 import CarouselWrapper from '../components/CarouselWrapper';
 
@@ -123,24 +122,15 @@ export default function ProductView({ productId, products, onOpenBookingModal })
                 </div>
               </div>
 
-              {/* Interactive Calendar widget */}
-              <CalendarWidget
-                product={product}
-                selectedDate={selectedDate}
-                onSelectDate={setSelectedDate}
-              />
-
               {/* Action buttons */}
               <div className="prod-actions">
-                <button
-                  className="btn btn-primary btn-shimmer"
-                  onClick={() => onOpenBookingModal(product.id, selectedDate)}
+                <button 
+                  className="btn btn-whatsapp-large btn-shimmer" 
+                  onClick={handleWhatsAppEnquiry}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', width: '100%', padding: '1.2rem 2rem', fontSize: '1.1rem' }}
                 >
-                  Book This Set
-                </button>
-                <button className="btn btn-whatsapp-large btn" onClick={handleWhatsAppEnquiry}>
-                  <i className="fa-brands fa-whatsapp" style={{ marginRight: '0.5rem', fontSize: '1.1rem' }}></i>{' '}
-                  WhatsApp to Enquire
+                  <i className="fa-brands fa-whatsapp" style={{ fontSize: '1.5rem' }}></i>{' '}
+                  Book & Enquire via WhatsApp
                 </button>
               </div>
             </div>

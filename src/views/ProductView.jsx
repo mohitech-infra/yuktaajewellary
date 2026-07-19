@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ProductCard from '../components/ProductCard';
 import CarouselWrapper from '../components/CarouselWrapper';
 
-export default function ProductView({ productId, products, onOpenBookingModal }) {
+export default function ProductView({ productId, products, onOpenBookingModal, onOpenBuyModal }) {
   const product = products.find((p) => p.id === productId) || products[0];
 
   const [selectedImage, setSelectedImage] = useState(product.img);
@@ -103,9 +103,17 @@ export default function ProductView({ productId, products, onOpenBookingModal })
                 ))}
               </div>
 
-              <div className="prod-price-box">
-                <div className="prod-price-box-label">Rental Price (Per Occasion)</div>
-                <div className="prod-price-box-val">₹{product.price.toLocaleString('en-IN')}</div>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <div className="prod-price-box" style={{ flex: 1 }}>
+                  <div className="prod-price-box-label">Rental Price (Per Occasion)</div>
+                  <div className="prod-price-box-val">₹{product.price.toLocaleString('en-IN')}</div>
+                </div>
+                {product.buy_price && (
+                  <div className="prod-price-box prod-price-box--buy" style={{ flex: 1 }}>
+                    <div className="prod-price-box-label">Buy Price (One-time)</div>
+                    <div className="prod-price-box-val" style={{ color: 'var(--color-gold-dark)' }}>₹{product.buy_price.toLocaleString('en-IN')}</div>
+                  </div>
+                )}
               </div>
 
               <h4 className="prod-desc-title">Description</h4>
@@ -132,6 +140,16 @@ export default function ProductView({ productId, products, onOpenBookingModal })
                   <i className="fa-brands fa-whatsapp" style={{ fontSize: '1.5rem' }}></i>{' '}
                   Book & Enquire via WhatsApp
                 </button>
+                {product.buy_price && (
+                  <button
+                    className="btn btn-buy btn-shimmer"
+                    onClick={() => onOpenBuyModal && onOpenBuyModal(product)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', width: '100%', padding: '1.2rem 2rem', fontSize: '1.1rem', marginTop: '0.75rem' }}
+                  >
+                    <i className="fa-solid fa-bag-shopping" style={{ fontSize: '1.3rem' }}></i>{' '}
+                    Buy This Set — ₹{product.buy_price.toLocaleString('en-IN')}
+                  </button>
+                )}
               </div>
             </div>
           </div>

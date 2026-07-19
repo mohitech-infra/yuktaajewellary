@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 
 export default function AdminView({
@@ -9,7 +9,11 @@ export default function AdminView({
   bookings,
   dbMode,
   leads = [],
-  setLeads
+  setLeads,
+  settings,
+  setSettings,
+  orders = [],
+  setOrders
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return sessionStorage.getItem('yuktaa_admin_auth') === 'true';
@@ -18,6 +22,77 @@ export default function AdminView({
   const [loginError, setLoginError] = useState('');
   const [adminPassword, setAdminPassword] = useState(localStorage.getItem('yuktaa_admin_password') || '1234');
   const [isFetchingPassword, setIsFetchingPassword] = useState(false);
+
+  // Local state for Offer settings
+  const [localVoucherCode, setLocalVoucherCode] = useState(settings?.welcome_voucher_code || 'YUKTAA2000');
+  const [localVoucherAmount, setLocalVoucherAmount] = useState(settings?.welcome_voucher_amount || 2000);
+  const [localMinBill, setLocalMinBill] = useState(settings?.welcome_voucher_min_bill || 6000);
+  const [localRedeemLimit, setLocalRedeemLimit] = useState(settings?.wallet_redeem_limit_pct || 50);
+  const [localTerms, setLocalTerms] = useState(settings?.wallet_terms || []);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  // Keep local inputs in sync with parent settings prop when it resolves
+  useEffect(() => {
+    if (settings) {
+      setLocalVoucherCode(settings.welcome_voucher_code || 'YUKTAA2000');
+      setLocalVoucherAmount(settings.welcome_voucher_amount || 2000);
+      setLocalMinBill(settings.welcome_voucher_min_bill || 6000);
+      setLocalRedeemLimit(settings.wallet_redeem_limit_pct || 50);
+      setLocalTerms(settings.wallet_terms || []);
+    }
+  }, [settings]);
+
+  const handleSaveOfferSettings = async (e) => {
+    e.preventDefault();
+    setIsSavingSettings(true);
+    try {
+      const updates = [
+        { key: 'welcome_voucher_code', value: localVoucherCode },
+        { key: 'welcome_voucher_amount', value: String(localVoucherAmount) },
+        { key: 'welcome_voucher_min_bill', value: String(localMinBill) },
+        { key: 'wallet_redeem_limit_pct', value: String(localRedeemLimit) },
+        { key: 'wallet_terms', value: JSON.stringify(localTerms) }
+      ];
+
+      const { error } = await supabase
+        .from('admin_settings')
+        .upsert(updates);
+
+      if (error) throw error;
+
+      // Update parent state
+      setSettings({
+        welcome_voucher_code: localVoucherCode,
+        welcome_voucher_amount: Number(localVoucherAmount),
+        welcome_voucher_min_bill: Number(localMinBill),
+        wallet_redeem_limit_pct: Number(localRedeemLimit),
+        wallet_terms: localTerms
+      });
+
+      triggerNotification('Offer settings and terms updated successfully!', 'success');
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      triggerNotification('Failed to save settings to Supabase.', 'error');
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  const handleAddTerm = () => {
+    setLocalTerms((prev) => [...prev, '']);
+  };
+
+  const handleUpdateTerm = (index, value) => {
+    setLocalTerms((prev) => {
+      const copy = [...prev];
+      copy[index] = value;
+      return copy;
+    });
+  };
+
+  const handleDeleteTerm = (index) => {
+    setLocalTerms((prev) => prev.filter((_, i) => i !== index));
+  };
 
   // Fetch password from Supabase on mount
   useState(() => {
@@ -106,6 +181,7 @@ export default function AdminView({
     category: '',
     categoryTag: '',
     price: 1000,
+    buy_price: '',
     color: 'gold',
     occasions: [],
     description: '',
@@ -222,6 +298,7 @@ export default function AdminView({
       category: '',
       categoryTag: '',
       price: 1000,
+      buy_price: '',
       color: 'gold',
       occasions: [],
       description: '',
@@ -242,6 +319,7 @@ export default function AdminView({
       category: product.category,
       categoryTag: product.categoryTag || '',
       price: product.price,
+      buy_price: product.buy_price || '',
       color: product.color || 'gold',
       occasions: product.occasions || [],
       description: product.description || '',
@@ -302,12 +380,13 @@ export default function AdminView({
 
     if (formMode === 'add') {
       try {
-        const { error } = await supabase.from('products').insert({
+        const payload = {
           id: productForm.id,
           name: productForm.name,
           category: productForm.category,
           categoryTag: productForm.categoryTag,
-          price: productForm.price,
+          price: Number(productForm.price),
+          buy_price: productForm.buy_price !== '' ? Number(productForm.buy_price) : null,
           color: productForm.color,
           occasions: productForm.occasions,
           description: productForm.description,
@@ -317,22 +396,29 @@ export default function AdminView({
           img: productForm.img,
           images: productForm.images || [],
           bookedDates: productForm.bookedDates || []
-        });
+        };
+        const { error } = await supabase.from('products').insert(payload);
         if (error) throw error;
-        setProducts((prev) => [...prev, productForm]);
+        setProducts((prev) => [...prev, payload]);
         triggerNotification('Product added successfully to Supabase!');
       } catch (err) {
         console.warn('Supabase insert failed. Saving to local cache only.', err);
-        setProducts((prev) => [...prev, productForm]);
+        const payload = {
+          ...productForm,
+          price: Number(productForm.price),
+          buy_price: productForm.buy_price !== '' ? Number(productForm.buy_price) : null
+        };
+        setProducts((prev) => [...prev, payload]);
         triggerNotification('Product saved locally (Offline Mode)');
       }
     } else {
       try {
-        const { error } = await supabase.from('products').update({
+        const payload = {
           name: productForm.name,
           category: productForm.category,
           categoryTag: productForm.categoryTag,
-          price: productForm.price,
+          price: Number(productForm.price),
+          buy_price: productForm.buy_price !== '' ? Number(productForm.buy_price) : null,
           color: productForm.color,
           occasions: productForm.occasions,
           description: productForm.description,
@@ -342,16 +428,22 @@ export default function AdminView({
           img: productForm.img,
           images: productForm.images || [],
           bookedDates: productForm.bookedDates || []
-        }).eq('id', productForm.id);
+        };
+        const { error } = await supabase.from('products').update(payload).eq('id', productForm.id);
         if (error) throw error;
         setProducts((prev) =>
-          prev.map((p) => (p.id === productForm.id ? productForm : p))
+          prev.map((p) => (p.id === productForm.id ? { ...productForm, ...payload } : p))
         );
         triggerNotification('Product updated successfully in Supabase!');
       } catch (err) {
         console.warn('Supabase update failed. Updating local cache only.', err);
+        const payload = {
+          ...productForm,
+          price: Number(productForm.price),
+          buy_price: productForm.buy_price !== '' ? Number(productForm.buy_price) : null
+        };
         setProducts((prev) =>
-          prev.map((p) => (p.id === productForm.id ? productForm : p))
+          prev.map((p) => (p.id === productForm.id ? payload : p))
         );
         triggerNotification('Product updated locally (Offline Mode)');
       }
@@ -571,6 +663,40 @@ export default function AdminView({
   // Calculate metrics
   const totalRevenue = bookings.reduce((sum, b) => sum + (b.depositAmount || 0), 0);
   const totalBlockedDatesCount = products.reduce((sum, p) => sum + (p.bookedDates ? p.bookedDates.length : 0), 0);
+  const ordersRevenue = orders.filter(o => o.order_status !== 'Cancelled').reduce((sum, o) => sum + (o.buy_price || 0), 0);
+  const pendingOrdersCount = orders.filter(o => o.order_status === 'Pending').length;
+
+  const handleDeleteOrder = async (orderId) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+      if (error) throw error;
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      triggerNotification('Order deleted successfully!', 'success');
+    } catch (err) {
+      console.error('Delete order error:', err);
+      triggerNotification('Failed to delete order.', 'error');
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ order_status: newStatus })
+        .eq('id', orderId);
+      if (error) throw error;
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, order_status: newStatus } : o))
+      );
+      triggerNotification(`Order status updated to ${newStatus}!`, 'success');
+    } catch (err) {
+      console.error('Update order status error:', err);
+      triggerNotification('Failed to update order status.', 'error');
+    }
+  };
 
   // Auth Screen
   if (!isAuthenticated) {
@@ -754,8 +880,10 @@ export default function AdminView({
             { id: 'products', label: 'Jewellery Inventory', icon: 'fa-gem' },
             { id: 'occasions', label: 'Occasions Banner', icon: 'fa-calendar-days' },
             { id: 'bookings', label: 'Bookings & Logs', icon: 'fa-book-bookmark' },
+            { id: 'orders', label: 'Buy Orders', icon: 'fa-bag-shopping' },
             { id: 'leads', label: 'Sign-ups / Leads', icon: 'fa-users' },
             { id: 'backup', label: 'Database Backup', icon: 'fa-database' },
+            { id: 'offer_settings', label: 'Offer & Terms Settings', icon: 'fa-tags' },
             { id: 'settings', label: 'Security Settings', icon: 'fa-shield-halved' }
           ].map((item) => (
             <button
@@ -855,12 +983,14 @@ export default function AdminView({
             </p>
 
             {/* Stat Cards */}
-            <div className="responsive-auto-grid" style={{ marginBottom: '2.5rem' }}>
+            <div className="responsive-auto-grid" style={{ marginBottom: '2.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
               {[
                 { title: 'Active Inventory', count: `${products.length} Sets`, desc: 'Total jewelry items', icon: 'fa-gem', bg: '#fdfcf7' },
                 { title: 'Appointments Booked', count: `${bookings.length} Slots`, desc: 'Through web scheduler', icon: 'fa-book-bookmark', bg: '#fbf8fa' },
                 { title: 'Blocked Calendar Dates', count: `${totalBlockedDatesCount} Days`, desc: 'Dates blocked out', icon: 'fa-calendar-xmark', bg: '#f7fbf9' },
-                { title: 'Est. Booking Deposits', count: `₹${totalRevenue.toLocaleString('en-IN')}`, desc: '30% security deposit logs', icon: 'fa-indian-rupee-sign', bg: '#fdf9f7' }
+                { title: 'Est. Booking Deposits', count: `₹${totalRevenue.toLocaleString('en-IN')}`, desc: '30% security deposit logs', icon: 'fa-indian-rupee-sign', bg: '#fdf9f7' },
+                { title: 'Pending Buy Orders', count: `${pendingOrdersCount} Orders`, desc: 'Requires confirmation', icon: 'fa-bag-shopping', bg: '#fffaf0' },
+                { title: 'Outright Buy Sales', count: `₹${ordersRevenue.toLocaleString('en-IN')}`, desc: 'Excluding cancelled orders', icon: 'fa-coins', bg: '#f0f9ff' }
               ].map((card, idx) => (
                 <div key={idx} style={{
                   backgroundColor: 'var(--color-white)',
@@ -1117,6 +1247,19 @@ export default function AdminView({
                           required
                           min="0"
                           value={productForm.price}
+                          onChange={handleProductInputChange}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Buy Price (₹ Outright Purchase)</label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          name="buy_price"
+                          placeholder="Leave empty if not for sale"
+                          min="0"
+                          value={productForm.buy_price || ''}
                           onChange={handleProductInputChange}
                         />
                       </div>
@@ -1778,7 +1921,7 @@ export default function AdminView({
                           </td>
                           <td style={{ padding: '1.2rem', textAlign: 'right', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                             <a 
-                              href={`https://wa.me/${lead.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${lead.name.split(' ')[0]}, I saw you claimed your ₹2000 welcome voucher! Let me know if you need help browsing our collection.`)}`}
+                              href={`https://wa.me/${lead.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${lead.name.split(' ')[0]}, I saw you claimed your ₹${(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} welcome voucher! Let me know if you need help browsing our collection.`)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="btn"
@@ -1796,6 +1939,134 @@ export default function AdminView({
                           </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab Buy Orders */}
+        {activeTab === 'orders' && (
+          <div className="admin-tab-content">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <div>
+                <h3 className="brand-font" style={{ fontSize: '1.8rem', color: 'var(--color-primary)' }}>Buy Orders Management</h3>
+                <p style={{ color: 'var(--color-text-muted)' }}>Orders submitted by customers to purchase jewellery sets outright.</p>
+              </div>
+            </div>
+
+            <div className="admin-card" style={{ padding: '0', overflow: 'hidden' }}>
+              {!orders || orders.length === 0 ? (
+                <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                  <i className="fa-solid fa-bag-shopping" style={{ fontSize: '3.5rem', marginBottom: '1rem', color: '#cbd5e1', display: 'block' }}></i>
+                  <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-primary)' }}>No buy orders received yet.</p>
+                  <p style={{ fontSize: '0.85rem', marginTop: '0.2rem' }}>Place a test order from the website product pages to verify.</p>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600 }}>Date</th>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600 }}>Customer Details</th>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600 }}>Jewellery Set</th>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600 }}>Amount</th>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600 }}>Shipping Address</th>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600 }}>Status</th>
+                        <th style={{ padding: '1.2rem', color: 'var(--color-primary)', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.map((order, idx) => {
+                        const dateFormatted = order.created_at ? new Date(order.created_at).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        }) : 'N/A';
+                        
+                        return (
+                          <tr key={order.id || idx} style={{ borderBottom: '1px solid var(--color-border)', transition: 'background 0.2s' }}>
+                            <td style={{ padding: '1.2rem', fontSize: '0.9rem', color: 'var(--color-text-muted)', verticalAlign: 'top' }}>
+                              {dateFormatted}
+                            </td>
+                            <td style={{ padding: '1.2rem', verticalAlign: 'top' }}>
+                              <div style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{order.customer_name}</div>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>{order.customer_phone}</div>
+                            </td>
+                            <td style={{ padding: '1.2rem', verticalAlign: 'top' }}>
+                              <div style={{ fontWeight: 500 }}>{order.product_name}</div>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>ID: {order.product_id || 'Deleted'}</span>
+                            </td>
+                            <td style={{ padding: '1.2rem', fontWeight: 700, color: 'var(--color-primary)', verticalAlign: 'top' }}>
+                              ₹{order.buy_price?.toLocaleString('en-IN')}
+                            </td>
+                            <td style={{ padding: '1.2rem', fontSize: '0.85rem', maxWidth: '250px', whiteSpace: 'normal', wordBreak: 'break-word', verticalAlign: 'top' }}>
+                              <div>{order.delivery_address}</div>
+                              <div style={{ fontWeight: 600, color: 'var(--color-text-muted)', marginTop: '2px' }}>{order.city} - {order.pincode}</div>
+                              {order.notes && (
+                                <div style={{ fontSize: '0.75rem', color: '#9c27b0', fontStyle: 'italic', marginTop: '5px', backgroundColor: '#f3e5f5', padding: '0.2rem 0.5rem', borderRadius: '4px', display: 'inline-block' }}>
+                                  Note: {order.notes}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: '1.2rem', verticalAlign: 'top' }}>
+                              <select
+                                value={order.order_status || 'Pending'}
+                                onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                                style={{
+                                  padding: '0.35rem 0.6rem',
+                                  borderRadius: '50px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  border: 'none',
+                                  outline: 'none',
+                                  backgroundColor: 
+                                    order.order_status === 'Confirmed' ? '#e1f5fe' :
+                                    order.order_status === 'Shipped' ? '#efebe9' :
+                                    order.order_status === 'Delivered' ? '#e8f5e9' :
+                                    order.order_status === 'Cancelled' ? '#ffebee' : '#fff8e1',
+                                  color:
+                                    order.order_status === 'Confirmed' ? '#0288d1' :
+                                    order.order_status === 'Shipped' ? '#5d4037' :
+                                    order.order_status === 'Delivered' ? '#2e7d32' :
+                                    order.order_status === 'Cancelled' ? '#c62828' : '#f57f17'
+                                }}
+                              >
+                                <option value="Pending">Pending</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="Shipped">Shipped</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Cancelled">Cancelled</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '1.2rem', textAlign: 'right', verticalAlign: 'top' }}>
+                              <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                                <a 
+                                  href={`https://wa.me/91${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                                    `Hi ${order.customer_name}! This is Varsha Jain from Yuktaa Designer Jewellery. I received your order to buy the "${order.product_name}" (₹${order.buy_price?.toLocaleString('en-IN')}). Let's confirm your delivery address and payment details.`
+                                  )}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn"
+                                  style={{ backgroundColor: '#25D366', borderColor: '#25D366', color: '#fff', padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                                >
+                                  <i className="fa-brands fa-whatsapp"></i> Chat
+                                </a>
+                                <button 
+                                  onClick={() => triggerConfirm('Delete Order', `Are you sure you want to permanently delete the order from ${order.customer_name}?`, () => handleDeleteOrder(order.id))}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: '#c0392b' }}
+                                >
+                                  <i className="fa-solid fa-trash"></i>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1893,6 +2164,178 @@ export default function AdminView({
                 </form>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Tab 5.5: Offer & Terms Settings */}
+        {activeTab === 'offer_settings' && (
+          <div>
+            <div style={{ marginBottom: '2rem' }}>
+              <h2 className="brand-font" style={{ fontSize: '2.4rem', color: 'var(--color-primary)', marginBottom: '0.3rem' }}>
+                Offer & Terms Settings
+              </h2>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>
+                Manage the welcome voucher rules, credit amounts, and general terms & conditions.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveOfferSettings}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '2rem',
+                alignItems: 'start'
+              }}>
+                {/* Left Column: Basic Parameters */}
+                <div style={{
+                  backgroundColor: 'var(--color-white)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '10px',
+                  padding: '2rem',
+                  boxShadow: 'var(--shadow-subtle)'
+                }}>
+                  <h3 className="brand-font" style={{ fontSize: '1.7rem', color: 'var(--color-primary)', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
+                    Welcome Offer Parameters
+                  </h3>
+
+                  <div className="form-group" style={{ marginBottom: '1.2rem' }}>
+                    <label className="form-label">Voucher Code</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      required
+                      placeholder="e.g. YUKTAA2000"
+                      value={localVoucherCode}
+                      onChange={(e) => setLocalVoucherCode(e.target.value)}
+                      style={{ height: '45px', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: '1.2rem' }}>
+                    <label className="form-label">Welcome Voucher Amount (₹)</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      required
+                      placeholder="e.g. 2000"
+                      value={localVoucherAmount}
+                      onChange={(e) => setLocalVoucherAmount(Number(e.target.value))}
+                      style={{ height: '45px', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: '1.2rem' }}>
+                    <label className="form-label">Minimum Bill for Offer (₹)</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      required
+                      placeholder="e.g. 6000"
+                      value={localMinBill}
+                      onChange={(e) => setLocalMinBill(Number(e.target.value))}
+                      style={{ height: '45px', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                    <label className="form-label">Redemption Percentage Limit (%)</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      required
+                      min="1"
+                      max="100"
+                      placeholder="e.g. 50"
+                      value={localRedeemLimit}
+                      onChange={(e) => setLocalRedeemLimit(Number(e.target.value))}
+                      style={{ height: '45px', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                    />
+                    <small style={{ display: 'block', marginTop: '0.4rem', color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
+                      Maximum percentage of the total bill that can be paid using wallet credits.
+                    </small>
+                  </div>
+
+                  <button type="submit" className="btn btn-accent btn-shimmer" disabled={isSavingSettings} style={{ width: '100%', height: '45px', borderRadius: '6px', gap: '0.5rem' }}>
+                    <i className={`fa-solid ${isSavingSettings ? 'fa-spinner fa-spin' : 'fa-floppy-disk'}`}></i>
+                    {isSavingSettings ? 'Saving...' : 'Save Settings'}
+                  </button>
+                </div>
+
+                {/* Right Column: Terms List Builder */}
+                <div style={{
+                  backgroundColor: 'var(--color-white)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '10px',
+                  padding: '2rem',
+                  boxShadow: 'var(--shadow-subtle)'
+                }}>
+                  <h3 className="brand-font" style={{ fontSize: '1.7rem', color: 'var(--color-primary)', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
+                    Terms & Conditions List
+                  </h3>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+                    Manage the terms shown to customers on the wallet page. Update the text below or delete items as needed.
+                  </p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                    {localTerms.map((term, index) => (
+                      <div key={index} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text-muted)', minWidth: '20px' }}>
+                          {index + 1}.
+                        </span>
+                        <input
+                          type="text"
+                          className="form-input"
+                          required
+                          value={term}
+                          onChange={(e) => handleUpdateTerm(index, e.target.value)}
+                          placeholder="Enter term and condition..."
+                          style={{ flexGrow: 1, height: '40px', borderRadius: '4px', border: '1px solid var(--color-border)' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTerm(index)}
+                          style={{
+                            backgroundColor: 'transparent',
+                            border: '1px solid #e74c3c',
+                            borderRadius: '4px',
+                            color: '#e74c3c',
+                            width: '40px',
+                            height: '40px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s',
+                            flexShrink: 0
+                          }}
+                          className="delete-term-btn"
+                          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#e74c3c'; e.currentTarget.style.color = '#fff'; }}
+                          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#e74c3c'; }}
+                          title="Delete term"
+                        >
+                          <i className="fa-solid fa-trash-can"></i>
+                        </button>
+                      </div>
+                    ))}
+
+                    {localTerms.length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '1.5rem', border: '1px dashed var(--color-border)', borderRadius: '6px', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+                        No terms added yet. Click 'Add New Term' to start.
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddTerm}
+                    className="btn btn-secondary"
+                    style={{ width: '100%', height: '40px', borderRadius: '6px', gap: '0.5rem', justifyContent: 'center' }}
+                  >
+                    <i className="fa-solid fa-plus"></i> Add New Term
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         )}
 

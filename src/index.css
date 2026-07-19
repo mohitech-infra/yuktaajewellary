@@ -4005,4 +4005,566 @@ textarea.form-input {
   line-height: 1.5;
 }
 
+/* Buy Option & Buy Modal Styles */
+.btn-buy {
+  background-color: var(--color-accent) !important;
+  color: var(--color-primary) !important;
+  border: 1px solid var(--color-accent) !important;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.btn-buy:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-accent) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* Price Box Buy Custom */
+.prod-price-box--buy {
+  border-color: var(--color-accent-light) !important;
+  background-color: var(--color-accent-light) !important;
+}
+
+/* Buy Order Modal overlay & styles */
+.bom-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(var(--color-primary-rgb), 0.7);
+  backdrop-filter: blur(5px);
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.bom-modal {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  box-shadow: var(--shadow-premium);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  animation: bom-fade-in 0.35s ease;
+}
+
+@keyframes bom-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Modal header */
+.bom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bom-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.bom-header-icon {
+  font-size: 1.5rem;
+  color: var(--color-accent-dark);
+}
+
+.bom-title {
+  font-family: var(--font-brand);
+  font-size: 1.4rem;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.bom-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0.1rem 0 0 0;
+}
+
+.bom-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.2rem;
+  transition: color 0.2s;
+}
+
+.bom-close-btn:hover {
+  color: var(--color-primary);
+}
+
+/* Steps Progress bar */
+.bom-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2rem;
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bom-progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  position: relative;
+  z-index: 1;
+}
+
+.bom-progress-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--color-white);
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  transition: all 0.3s;
+}
+
+.bom-progress-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.bom-progress-step.active .bom-progress-dot {
+  border-color: var(--color-accent-dark);
+  background-color: var(--color-accent-dark);
+  color: var(--color-primary);
+}
+
+.bom-progress-step.active .bom-progress-label {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.bom-progress-line {
+  flex-grow: 1;
+  height: 2px;
+  background-color: var(--color-border);
+  margin: -1rem 1rem 0 1rem;
+  position: relative;
+  top: -3px;
+  z-index: 0;
+  transition: background-color 0.3s;
+}
+
+.bom-progress-line.active {
+  background-color: var(--color-accent-dark);
+}
+
+/* Modal Form Styles */
+.bom-form, .bom-summary, .bom-success {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.bom-product-strip {
+  display: flex;
+  gap: 1rem;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.bom-product-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.bom-product-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bom-product-category {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--color-accent-dark);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.bom-product-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.bom-product-price {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-top: 0.15rem;
+}
+
+.bom-section-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-text-muted);
+  font-weight: 700;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.3rem;
+}
+
+.bom-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 480px) {
+  .bom-form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+.bom-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.bom-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 0.4rem;
+}
+
+.bom-input {
+  width: 100%;
+  height: 42px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  padding: 0 0.8rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  outline: none;
+  background-color: var(--color-white);
+  transition: all 0.2s;
+}
+
+.bom-input:focus {
+  border-color: var(--color-accent-dark);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.bom-input.error {
+  border-color: #e74c3c;
+  background-color: #fdf2f2;
+}
+
+.bom-textarea {
+  height: auto;
+  padding: 0.6rem 0.8rem;
+  resize: vertical;
+}
+
+.bom-error {
+  font-size: 0.72rem;
+  color: #e74c3c;
+  font-weight: 600;
+  margin-top: 0.3rem;
+}
+
+.bom-notice {
+  background-color: #f4f6f8;
+  border-left: 4px solid var(--color-text-muted);
+  border-radius: 4px;
+  padding: 0.8rem;
+  display: flex;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-start;
+}
+
+.bom-notice i {
+  font-size: 0.95rem;
+  margin-top: 0.1rem;
+}
+
+.bom-notice-amber {
+  background-color: #fff9eb;
+  border-left-color: var(--color-accent-dark);
+  color: #b06000;
+}
+
+.bom-btn-primary {
+  width: 100%;
+  height: 48px;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.bom-btn-primary:hover {
+  background-color: var(--color-accent-dark);
+  color: var(--color-primary);
+}
+
+.bom-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Step 2 Summary */
+.bom-summary-card {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 1.2rem;
+  margin-bottom: 1.2rem;
+}
+
+.bom-summary-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.bom-summary-product-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bom-summary-includes {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-top: 0.2rem;
+}
+
+.bom-summary-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.bom-summary-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #f4f6f8;
+  padding-bottom: 0.5rem;
+}
+
+.bom-summary-key {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.bom-summary-val {
+  font-size: 0.85rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  text-align: right;
+  max-width: 70%;
+}
+
+.bom-summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-bg);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+.bom-total-price {
+  font-size: 1.2rem;
+  color: var(--color-accent-dark);
+}
+
+.bom-summary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 1rem;
+}
+
+.bom-btn-secondary {
+  height: 48px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all 0.2s;
+}
+
+.bom-btn-secondary:hover {
+  background-color: var(--color-border);
+}
+
+/* Step 3 Success screen */
+.bom-success {
+  align-items: center;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+}
+
+.bom-success-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: #e8f5e9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.bom-success-icon {
+  font-size: 2.5rem;
+  color: #2e7d32;
+}
+
+.bom-success-title {
+  font-family: var(--font-brand);
+  font-size: 1.8rem;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+}
+
+.bom-success-msg {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  max-width: 420px;
+}
+
+.bom-success-detail-card {
+  width: 100%;
+  max-width: 360px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  text-align: left;
+}
+
+.bom-success-detail-row {
+  display: flex;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  align-items: flex-start;
+}
+
+.bom-success-detail-row i {
+  color: var(--color-accent-dark);
+  margin-top: 0.15rem;
+  width: 14px;
+  text-align: center;
+}
+
+.bom-btn-whatsapp {
+  width: 100%;
+  max-width: 360px;
+  height: 48px;
+  background-color: #25D366;
+  color: var(--color-white);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 10px rgba(37, 211, 102, 0.2);
+  transition: all 0.2s;
+}
+
+.bom-btn-whatsapp:hover {
+  background-color: #1ebd59;
+  transform: translateY(-1px);
+}
+
+.bom-btn-ghost {
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  margin-top: 1rem;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.bom-btn-ghost:hover {
+  color: var(--color-primary);
+}
+
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../utils/supabaseClient';
 
-export default function OfferEnvelope() {
+export default function OfferEnvelope({ settings }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(() => localStorage.getItem('yuktaa_claimed_offer') === 'true');
@@ -89,7 +89,7 @@ export default function OfferEnvelope() {
     
     // Copy discount code to clipboard
     try {
-      navigator.clipboard.writeText('YUKTAA2000');
+      navigator.clipboard.writeText(settings?.welcome_voucher_code || 'YUKTAA2000');
     } catch (err) {
       console.warn('Clipboard write failed:', err);
     }
@@ -98,7 +98,10 @@ export default function OfferEnvelope() {
     triggerConfetti();
 
     // Redirect to WhatsApp after a brief delay
-    const msg = `Hi Varsha! I just signed up on your website to claim my ₹2,000 welcome voucher (Code: YUKTAA2000).\nName: ${formData.name}\nPhone: ${formData.phone}\nPlease confirm my discount voucher.`;
+    const voucherCode = settings?.welcome_voucher_code || 'YUKTAA2000';
+    const amountText = (settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN');
+    const minBillText = (settings?.welcome_voucher_min_bill || 6000).toLocaleString('en-IN');
+    const msg = `Hi Varsha! I just signed up on your website to claim my ₹${amountText} welcome voucher (Code: ${voucherCode}) applicable on ₹${minBillText} minimum bill.\nName: ${formData.name}\nPhone: ${formData.phone}\nPlease confirm my discount voucher.`;
     const encodedMsg = encodeURIComponent(msg);
     setTimeout(() => {
       window.open(`https://wa.me/919987600673?text=${encodedMsg}`, '_blank');
@@ -122,7 +125,7 @@ export default function OfferEnvelope() {
         <p className="offer-desc">
           {!isOpen 
             ? "We welcome you to the Yuktaa family with an exclusive voucher. Tap the traditional envelope below to unlock your gift." 
-            : "Congratulations! You have unlocked your ₹2,000 welcome voucher."
+            : `Congratulations! You have unlocked your ₹${(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} welcome voucher.`
           }
         </p>
 
@@ -140,8 +143,8 @@ export default function OfferEnvelope() {
             {/* The letter inside that slides up */}
             <div className="letter">
               <span className="letter-title">WELCOME GIFT</span>
-              <span className="letter-amount">₹2,000 OFF</span>
-              <span className="letter-code-tag">Voucher: YUKTAA2000</span>
+              <span className="letter-amount">₹{(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} OFF</span>
+              <span className="letter-code-tag">Voucher: {settings?.welcome_voucher_code || 'YUKTAA2000'}</span>
             </div>
             
             <div className="envelope-front-pocket" />
@@ -156,7 +159,7 @@ export default function OfferEnvelope() {
                 Sign Up & Claim Voucher
               </h3>
               <p style={{ fontSize: '0.9rem', color: '#ebd1df', marginBottom: '1.5rem' }}>
-                Enter your details to receive your ₹2,000 shopping voucher. It will be copied to your clipboard and verified on WhatsApp!
+                Enter your details to receive your ₹{(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} shopping voucher. It will be copied to your clipboard and verified on WhatsApp!
               </p>
               
               <div className="claim-input-group">
@@ -181,7 +184,7 @@ export default function OfferEnvelope() {
               </div>
 
               <button type="submit" className="btn btn-accent btn-shimmer" style={{ width: '100%', padding: '1rem' }}>
-                Claim My ₹2,000 Off <i className="fa-solid fa-chevron-right" style={{ marginLeft: '0.3rem' }} />
+                Claim My ₹{(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} Off <i className="fa-solid fa-chevron-right" style={{ marginLeft: '0.3rem' }} />
               </button>
             </form>
           ) : (
@@ -191,13 +194,13 @@ export default function OfferEnvelope() {
                 Voucher Claimed!
               </h3>
               <p style={{ color: '#ebd1df', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
-                Voucher code <strong>YUKTAA2000</strong> has been copied to your clipboard.
+                Voucher code <strong>{settings?.welcome_voucher_code || 'YUKTAA2000'}</strong> has been copied to your clipboard.
               </p>
               <p style={{ fontSize: '0.85rem', color: '#ebd1df', marginBottom: '1.5rem' }}>
                 We are redirecting you to WhatsApp to verify your voucher and start your jewellery shopping consult. If it didn't open automatically, click below:
               </p>
               <a 
-                href={`https://wa.me/919987600673?text=${encodeURIComponent(`Hi Varsha! I want to claim my ₹2,000 welcome voucher YUKTAA2000.\nName: ${formData.name}\nPhone: ${formData.phone}`)}`}
+                href={`https://wa.me/919987600673?text=${encodeURIComponent(`Hi Varsha! I want to claim my ₹${(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} welcome voucher ${settings?.welcome_voucher_code || 'YUKTAA2000'}.\nName: ${formData.name}\nPhone: ${formData.phone}`)}`}
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="btn btn-accent btn-shimmer"

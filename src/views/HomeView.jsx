@@ -4,7 +4,7 @@ import ProductCard from '../components/ProductCard';
 import CarouselWrapper from '../components/CarouselWrapper';
 import OfferEnvelope from '../components/OfferEnvelope';
 
-export default function HomeView({ products, onOpenBookingModal }) {
+export default function HomeView({ products, onOpenBookingModal, settings }) {
   // Slices for lists
   const newArrivals = products.slice(0, 6);
   const mostLoved = products.slice(2, 8);
@@ -132,7 +132,7 @@ export default function HomeView({ products, onOpenBookingModal }) {
                 </button>
                 <a href="#wallet" className="btn" style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                   <i className="fa-solid fa-gift" style={{ color: '#ffd700' }}></i>
-                  Claim ₹2,000 Voucher
+                  Claim ₹{(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} Voucher
                 </a>
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function HomeView({ products, onOpenBookingModal }) {
                 </a>
                 <a href="#wallet" className="btn" style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                   <i className="fa-solid fa-gift" style={{ color: '#ffd700' }}></i>
-                  Claim ₹2,000 Voucher
+                  Claim ₹{(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} Voucher
                 </a>
               </div>
             </div>
@@ -355,7 +355,7 @@ export default function HomeView({ products, onOpenBookingModal }) {
       </section>
 
       {/* Exclusive Welcome Offer (Gift Envelope) */}
-      <OfferEnvelope />
+      <OfferEnvelope settings={settings} />
 
       {/* Most Loved Sets */}
       <section

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 
-export default function WalletView() {
+export default function WalletView({ settings }) {
   const [isClaimed, setIsClaimed] = useState(false);
   const [userName, setUserName] = useState('');
   const [formData, setFormData] = useState({ name: '', phone: '' });
@@ -59,7 +59,7 @@ export default function WalletView() {
     
     // Copy coupon code to clipboard
     try {
-      navigator.clipboard.writeText('YUKTAA2000');
+      navigator.clipboard.writeText(settings?.welcome_voucher_code || 'YUKTAA2000');
     } catch (err) {
       console.warn('Clipboard write failed:', err);
     }
@@ -84,7 +84,10 @@ export default function WalletView() {
     }
 
     // WhatsApp redirect
-    const msg = `Hi Varsha! I just signed up on your website to claim my ₹2,000 welcome voucher (Code: YUKTAA2000).\nName: ${formData.name}\nPhone: ${formData.phone}\nPlease confirm my discount voucher.`;
+    const voucherCode = settings?.welcome_voucher_code || 'YUKTAA2000';
+    const amountText = (settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN');
+    const minBillText = (settings?.welcome_voucher_min_bill || 6000).toLocaleString('en-IN');
+    const msg = `Hi Varsha! I just signed up on your website to claim my ₹${amountText} welcome voucher (Code: ${voucherCode}) applicable on ₹${minBillText} minimum bill.\nName: ${formData.name}\nPhone: ${formData.phone}\nPlease confirm my discount voucher.`;
     const encodedMsg = encodeURIComponent(msg);
     setTimeout(() => {
       window.open(`https://wa.me/919987600673?text=${encodedMsg}`, '_blank');
@@ -129,7 +132,7 @@ export default function WalletView() {
 
                 <div className="card-balance-block">
                   <span className="card-balance-label">AVAILABLE CREDIT</span>
-                  <span className="card-balance-amount">{isClaimed ? '₹2,000.00' : '₹0.00'}</span>
+                  <span className="card-balance-amount">{isClaimed ? `₹${(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')}.00` : '₹0.00'}</span>
                 </div>
 
                 <div className="card-footer-row">
@@ -150,14 +153,14 @@ export default function WalletView() {
                   <div className="claimed-status-content">
                     <span className="status-badge active"><span className="dot"></span> Active Credit</span>
                     <p style={{ marginTop: '0.8rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-                      Voucher code <strong style={{ color: 'var(--color-primary)' }}>YUKTAA2000</strong> is linked to this device and copied to your clipboard.
+                      Voucher code <strong style={{ color: 'var(--color-primary)' }}>{settings?.welcome_voucher_code || 'YUKTAA2000'}</strong> is linked to this device and copied to your clipboard.
                     </p>
                   </div>
                 ) : (
                   <div className="unclaimed-status-content">
                     <span className="status-badge pending"><span className="dot"></span> Locked</span>
                     <p style={{ marginTop: '0.8rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-                      Sign up below to activate your ₹2,000 welcome credit instantly.
+                      Sign up below to activate your ₹{(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} welcome credit instantly.
                     </p>
                   </div>
                 )}
@@ -169,7 +172,7 @@ export default function WalletView() {
               {!isClaimed ? (
                 <div className="wallet-signup-card">
                   <h3 className="brand-font" style={{ fontSize: '1.8rem', color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
-                    Activate ₹2,000 Credit
+                    Activate ₹{(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} Credit
                   </h3>
                   <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
                     Welcome to Yuktaa Designer Jewellery! Enter your name and phone number to unlock your first-time rental discount.
@@ -235,7 +238,7 @@ export default function WalletView() {
                       <div className="red-step-num">3</div>
                       <div className="red-step-content">
                         <strong>Mention Your Code</strong>
-                        <p>Let our coordinator know your code <strong>YUKTAA2000</strong> to get ₹2,000 off your total rental bill.</p>
+                        <p>Let our coordinator know your code <strong>{settings?.welcome_voucher_code || 'YUKTAA2000'}</strong> to get ₹{(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} off your total rental bill.</p>
                       </div>
                     </div>
                   </div>
@@ -245,7 +248,7 @@ export default function WalletView() {
                       Browse Collection
                     </a>
                     <a 
-                      href={`https://wa.me/919987600673?text=${encodeURIComponent(`Hi Varsha! I want to consult and book a jewellery set using my claimed ₹2,000 voucher (Code: YUKTAA2000).`)}`}
+                      href={`https://wa.me/919987600673?text=${encodeURIComponent(`Hi Varsha! I want to consult and book a jewellery set using my claimed ₹${(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')} voucher (Code: ${settings?.welcome_voucher_code || 'YUKTAA2000'}).`)}`}
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="btn btn-whatsapp-large"
@@ -266,11 +269,9 @@ export default function WalletView() {
               Terms & Conditions
             </h4>
             <ul>
-              <li>The welcome discount voucher code is valid for first-time clients only.</li>
-              <li>This offer is restricted to one claim per device/browser session.</li>
-              <li>Voucher code is valid for 1 year from the date of activation.</li>
-              <li>Discount is applicable on jewellery rental bookings only and cannot be exchanged for cash.</li>
-              <li>Applicable at our Goregaon West boutique styling session.</li>
+              {(settings?.wallet_terms || []).map((term, index) => (
+                <li key={index}>{term}</li>
+              ))}
             </ul>
           </div>
 

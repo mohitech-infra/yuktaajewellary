@@ -143,3 +143,77 @@ CREATE POLICY "Allow public insert" ON public.leads FOR INSERT WITH CHECK (true)
 CREATE POLICY "Allow public read access" ON public.leads FOR SELECT USING (true);
 CREATE POLICY "Allow public update" ON public.leads FOR UPDATE USING (true);
 CREATE POLICY "Allow public delete" ON public.leads FOR DELETE USING (true);
+
+
+-- 7. CREATE ADMIN_SETTINGS TABLE
+CREATE TABLE IF NOT EXISTS public.admin_settings (
+  key text PRIMARY KEY,
+  value text NOT NULL,
+  created_at timestamp with time zone DEFAULT now()
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.admin_settings ENABLE ROW LEVEL SECURITY;
+
+-- Set Public Policies for admin_settings using DO blocks to prevent duplicate policy errors if re-run
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read access' AND tablename = 'admin_settings') THEN
+        CREATE POLICY "Allow public read access" ON public.admin_settings FOR SELECT USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert' AND tablename = 'admin_settings') THEN
+        CREATE POLICY "Allow public insert" ON public.admin_settings FOR INSERT WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update' AND tablename = 'admin_settings') THEN
+        CREATE POLICY "Allow public update" ON public.admin_settings FOR UPDATE USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete' AND tablename = 'admin_settings') THEN
+        CREATE POLICY "Allow public delete" ON public.admin_settings FOR DELETE USING (true);
+    END IF;
+END
+$$;
+
+-- Seed default password if not exists
+INSERT INTO public.admin_settings (key, value) 
+VALUES ('admin_password', '1234')
+ON CONFLICT (key) DO NOTHING;
+
+-- Seed default settings keys if not exist
+INSERT INTO public.admin_settings (key, value)
+VALUES 
+('welcome_voucher_code', 'YUKTAA2000'),
+('welcome_voucher_amount', '2000'),
+('welcome_voucher_min_bill', '6000'),
+('wallet_redeem_limit_pct', '50'),
+('wallet_terms', '["The welcome discount voucher code is valid for first-time clients only.","This offer is restricted to one claim per device/browser session.","Voucher code is valid for 1 year from the date of activation.","Discount is applicable on jewellery rental bookings only and cannot be exchanged for cash.","Applicable at our Goregaon West boutique styling session.","Wallet balance can be redeemed for up to 50% of the bill amount.","The welcome offer of ₹2,000 is applicable on a minimum bill of ₹6,000."]')
+ON CONFLICT (key) DO NOTHING;
+
+
+-- 8. ADD BUY_PRICE COLUMN TO PRODUCTS (run if products table already created)
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS buy_price integer DEFAULT NULL;
+
+
+-- 9. CREATE ORDERS TABLE (for buy orders placed by customers)
+CREATE TABLE IF NOT EXISTS public.orders (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id text REFERENCES public.products(id) ON DELETE SET NULL,
+  product_name text NOT NULL,
+  buy_price integer NOT NULL,
+  customer_name text NOT NULL,
+  customer_phone text NOT NULL,
+  delivery_address text NOT NULL,
+  city text NOT NULL,
+  pincode text NOT NULL,
+  notes text DEFAULT '',
+  order_status text DEFAULT 'Pending',
+  created_at timestamp with time zone DEFAULT now()
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+
+-- Set Public Policies for Orders
+CREATE POLICY "Allow public insert on orders" ON public.orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public read on orders" ON public.orders FOR SELECT USING (true);
+CREATE POLICY "Allow public update on orders" ON public.orders FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete on orders" ON public.orders FOR DELETE USING (true);

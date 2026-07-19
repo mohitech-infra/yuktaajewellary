@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BookingModal from './components/BookingModal';
+import BuyOrderModal from './components/BuyOrderModal';
 import BottomNav from './components/BottomNav';
 import { PRODUCTS, OCCASIONS_META } from './data/products';
 import { supabase } from './utils/supabaseClient';
@@ -29,7 +30,12 @@ export default function App() {
       if (saved && saved !== 'undefined' && saved !== 'null') {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          // Merge buy_price from static data for any cached products missing it
+          return parsed.map((p) => {
+            if (p.buy_price != null) return p;
+            const localMatch = PRODUCTS.find((lp) => lp.id === p.id);
+            return { ...p, buy_price: localMatch ? localMatch.buy_price : null };
+          });
         }
       }
     } catch (e) {
@@ -69,8 +75,45 @@ export default function App() {
   });
 
   const [leads, setLeads] = useState([]);
+  const [orders, setOrders] = useState([]);
+
+  const [settings, setSettings] = useState(() => {
+    const defaultSettings = {
+      welcome_voucher_code: 'YUKTAA2000',
+      welcome_voucher_amount: 2000,
+      welcome_voucher_min_bill: 6000,
+      wallet_redeem_limit_pct: 50,
+      wallet_terms: [
+        "The welcome discount voucher code is valid for first-time clients only.",
+        "This offer is restricted to one claim per device/browser session.",
+        "Voucher code is valid for 1 year from the date of activation.",
+        "Discount is applicable on jewellery rental bookings only and cannot be exchanged for cash.",
+        "Applicable at our Goregaon West boutique styling session.",
+        "Wallet balance can be redeemed for up to 50% of the bill amount.",
+        "The welcome offer of ₹2,000 is applicable on a minimum bill of ₹6,000."
+      ]
+    };
+    try {
+      const saved = localStorage.getItem('yuktaa_settings');
+      if (saved && saved !== 'undefined' && saved !== 'null') {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return { ...defaultSettings, ...parsed };
+        }
+      }
+    } catch (e) {
+      console.error('Error loading settings from localStorage:', e);
+    }
+    return defaultSettings;
+  });
 
   // Sync state changes with localStorage (Client-side offline cache)
+  useEffect(() => {
+    if (settings) {
+      localStorage.setItem('yuktaa_settings', JSON.stringify(settings));
+    }
+  }, [settings]);
+
   useEffect(() => {
     if (products) {
       localStorage.setItem('yuktaa_products_v2', JSON.stringify(products));
@@ -100,7 +143,16 @@ export default function App() {
           .order('created_at', { ascending: true });
 
         if (!prodError && dbProducts && dbProducts.length > 0) {
-          setProducts(dbProducts);
+          // Merge buy_price from local static data as fallback
+          // (in case the buy_price DB migration hasn't been run yet)
+          const mergedProducts = dbProducts.map((dbProd) => {
+            const localMatch = PRODUCTS.find((lp) => lp.id === dbProd.id);
+            return {
+              ...dbProd,
+              buy_price: dbProd.buy_price ?? (localMatch ? localMatch.buy_price : null),
+            };
+          });
+          setProducts(mergedProducts);
           setDbMode('Live Database');
         }
 
@@ -147,6 +199,43 @@ export default function App() {
         if (!leadsError && dbLeads) {
           setLeads(dbLeads);
         }
+
+        // 5. Fetch live orders
+        const { data: dbOrders, error: ordersError } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!ordersError && dbOrders) {
+          setOrders(dbOrders);
+        }
+
+        // 6. Fetch live settings
+        const { data: dbSettings, error: settingsError } = await supabase
+          .from('admin_settings')
+          .select('*');
+
+        if (!settingsError && dbSettings && dbSettings.length > 0) {
+          const settingsObj = {};
+          dbSettings.forEach((item) => {
+            if (item.key === 'wallet_terms') {
+              try {
+                settingsObj.wallet_terms = JSON.parse(item.value);
+              } catch (e) {
+                console.error("Error parsing wallet_terms from Supabase", e);
+              }
+            } else if (item.key === 'welcome_voucher_code') {
+              settingsObj.welcome_voucher_code = item.value;
+            } else if (item.key === 'welcome_voucher_amount') {
+              settingsObj.welcome_voucher_amount = Number(item.value);
+            } else if (item.key === 'welcome_voucher_min_bill') {
+              settingsObj.welcome_voucher_min_bill = Number(item.value);
+            } else if (item.key === 'wallet_redeem_limit_pct') {
+              settingsObj.wallet_redeem_limit_pct = Number(item.value);
+            }
+          });
+          setSettings((prev) => ({ ...prev, ...settingsObj }));
+        }
       } catch (err) {
         console.warn('Supabase initialization warning or offline mode. Using Local Cache.', err);
       }
@@ -158,6 +247,20 @@ export default function App() {
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingProductId, setBookingProductId] = useState('');
   const [bookingInitialDate, setBookingInitialDate] = useState('');
+
+  // Buy Order Modal State
+  const [buyModalOpen, setBuyModalOpen] = useState(false);
+  const [buyModalProduct, setBuyModalProduct] = useState(null);
+
+  const handleOpenBuyModal = (product) => {
+    setBuyModalProduct(product);
+    setBuyModalOpen(true);
+  };
+
+  const handleCloseBuyModal = () => {
+    setBuyModalOpen(false);
+    setBuyModalProduct(null);
+  };
 
   // Hash Router setup
   useEffect(() => {
@@ -236,7 +339,7 @@ export default function App() {
   const renderView = () => {
     switch (route) {
       case 'home':
-        return <HomeView products={products} onOpenBookingModal={handleOpenBookingModal} />;
+        return <HomeView products={products} onOpenBookingModal={handleOpenBookingModal} settings={settings} />;
       case 'collection':
         return <CollectionView products={products} />;
       case 'occasions':
@@ -254,6 +357,7 @@ export default function App() {
             productId={routeParam}
             products={products}
             onOpenBookingModal={handleOpenBookingModal}
+            onOpenBuyModal={handleOpenBuyModal}
           />
         );
       case 'how-it-works':
@@ -263,7 +367,7 @@ export default function App() {
       case 'contact':
         return <ContactView />;
       case 'wallet':
-        return <WalletView />;
+        return <WalletView settings={settings} />;
       case 'admin':
         return (
           <AdminView
@@ -275,11 +379,15 @@ export default function App() {
             dbMode={dbMode}
             leads={leads}
             setLeads={setLeads}
+            settings={settings}
+            setSettings={setSettings}
+            orders={orders}
+            setOrders={setOrders}
           />
         );
       default:
         // Fallback to Home
-        return <HomeView products={products} onOpenBookingModal={handleOpenBookingModal} />;
+        return <HomeView products={products} onOpenBookingModal={handleOpenBookingModal} settings={settings} />;
     }
   };
 
@@ -312,6 +420,12 @@ export default function App() {
         onClose={handleCloseBookingModal}
         products={products}
         onBookingSuccess={handleBookingSuccess}
+      />
+
+      <BuyOrderModal
+        isOpen={buyModalOpen}
+        product={buyModalProduct}
+        onClose={handleCloseBuyModal}
       />
     </div>
   );

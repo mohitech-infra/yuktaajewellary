@@ -1794,7 +1794,7 @@ export default function AdminView({
                       }}>
                         {/* WhatsApp Contact Action */}
                         <a
-                          href={`https://wa.me/91${b.phone}?text=${encodeURIComponent(`Hi ${b.name}! This is Varsha Jain from Yuktaa Designer Jewellery. I received your booking slot request for the set "${b.productName}" on ${b.date}. Let's coordinate your boutique visit.`)}`}
+                          href={`https://wa.me/91${(b.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${b.name || 'Client'}! This is Varsha Jain from Yuktaa Designer Jewellery. I received your booking slot request for the set "${b.productName || 'Jewellery Set'}" on ${b.date || ''}. Let's coordinate your boutique visit.`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           title="Contact Client on WhatsApp"
@@ -1818,33 +1818,33 @@ export default function AdminView({
                         </a>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', paddingRight: '2rem' }}>
-                          <span style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '1.05rem' }}>{b.name}</span>
+                          <span style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '1.05rem' }}>{b.name || 'Anonymous Client'}</span>
                           <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
-                            Logged: {new Date(b.timestamp).toLocaleString()}
+                            Logged: {b.timestamp ? new Date(b.timestamp).toLocaleString() : 'N/A'}
                           </span>
 
                           <div style={{ fontSize: '0.85rem', display: 'grid', gridTemplateColumns: '80px 1fr', gap: '0.3rem', marginTop: '0.5rem' }}>
                             <span style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>Phone:</span>
-                            <span style={{ fontWeight: 600 }}>{b.phone}</span>
+                            <span style={{ fontWeight: 600 }}>{b.phone || 'N/A'}</span>
 
                             <span style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>Set Name:</span>
-                            <span style={{ fontWeight: 600 }}>{b.productName}</span>
+                            <span style={{ fontWeight: 600 }}>{b.productName || 'General Viewing / Consultation'}</span>
 
                             <span style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>Event Date:</span>
                             <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>
-                              {new Date(b.date).toLocaleDateString('en-IN', {
+                              {b.date ? new Date(b.date).toLocaleDateString('en-IN', {
                                 day: 'numeric',
                                 month: 'long',
                                 year: 'numeric'
-                              })}
+                              }) : 'N/A'}
                             </span>
 
                             <span style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>Occasion:</span>
-                            <span>{b.eventType}</span>
+                            <span>{b.eventType || 'Boutique Visit'}</span>
 
                             <span style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>Deposit:</span>
                             <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
-                              ₹{b.depositAmount.toLocaleString()} ({b.paymentMethod})
+                              ₹{(b.depositAmount ?? 0).toLocaleString('en-IN')} ({b.paymentMethod || 'N/A'})
                             </span>
                           </div>
                         </div>

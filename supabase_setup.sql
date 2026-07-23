@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   category text NOT NULL,
   "categoryTag" text,
   price integer NOT NULL,
+  buy_price integer,
   color text,
   occasions text[] DEFAULT '{}'::text[],
   description text,
@@ -23,11 +24,22 @@ CREATE TABLE IF NOT EXISTS public.products (
 -- Enable Row Level Security
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 
--- Set Public Policies for Products
-CREATE POLICY "Allow public read access" ON public.products FOR SELECT USING (true);
-CREATE POLICY "Allow public insert" ON public.products FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON public.products FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON public.products FOR DELETE USING (true);
+-- Set Public Policies for Products using DO blocks to prevent duplicate policy errors if re-run
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Allow public read access" ON public.products;
+    CREATE POLICY "Allow public read access" ON public.products FOR SELECT USING (true);
+    
+    DROP POLICY IF EXISTS "Allow public insert" ON public.products;
+    CREATE POLICY "Allow public insert" ON public.products FOR INSERT WITH CHECK (true);
+    
+    DROP POLICY IF EXISTS "Allow public update" ON public.products;
+    CREATE POLICY "Allow public update" ON public.products FOR UPDATE USING (true);
+    
+    DROP POLICY IF EXISTS "Allow public delete" ON public.products;
+    CREATE POLICY "Allow public delete" ON public.products FOR DELETE USING (true);
+END
+$$;
 
 
 -- 2. CREATE OCCASIONS TABLE
@@ -42,11 +54,22 @@ CREATE TABLE IF NOT EXISTS public.occasions (
 -- Enable Row Level Security
 ALTER TABLE public.occasions ENABLE ROW LEVEL SECURITY;
 
--- Set Public Policies for Occasions
-CREATE POLICY "Allow public read access" ON public.occasions FOR SELECT USING (true);
-CREATE POLICY "Allow public insert" ON public.occasions FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON public.occasions FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON public.occasions FOR DELETE USING (true);
+-- Set Public Policies for Occasions using DO blocks
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Allow public read access" ON public.occasions;
+    CREATE POLICY "Allow public read access" ON public.occasions FOR SELECT USING (true);
+    
+    DROP POLICY IF EXISTS "Allow public insert" ON public.occasions;
+    CREATE POLICY "Allow public insert" ON public.occasions FOR INSERT WITH CHECK (true);
+    
+    DROP POLICY IF EXISTS "Allow public update" ON public.occasions;
+    CREATE POLICY "Allow public update" ON public.occasions FOR UPDATE USING (true);
+    
+    DROP POLICY IF EXISTS "Allow public delete" ON public.occasions;
+    CREATE POLICY "Allow public delete" ON public.occasions FOR DELETE USING (true);
+END
+$$;
 
 
 -- 3. CREATE BOOKINGS TABLE
@@ -66,11 +89,22 @@ CREATE TABLE IF NOT EXISTS public.bookings (
 -- Enable Row Level Security
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 
--- Set Public Policies for Bookings
-CREATE POLICY "Allow public read access" ON public.bookings FOR SELECT USING (true);
-CREATE POLICY "Allow public insert" ON public.bookings FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON public.bookings FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON public.bookings FOR DELETE USING (true);
+-- Set Public Policies for Bookings using DO blocks
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Allow public read access" ON public.bookings;
+    CREATE POLICY "Allow public read access" ON public.bookings FOR SELECT USING (true);
+    
+    DROP POLICY IF EXISTS "Allow public insert" ON public.bookings;
+    CREATE POLICY "Allow public insert" ON public.bookings FOR INSERT WITH CHECK (true);
+    
+    DROP POLICY IF EXISTS "Allow public update" ON public.bookings;
+    CREATE POLICY "Allow public update" ON public.bookings FOR UPDATE USING (true);
+    
+    DROP POLICY IF EXISTS "Allow public delete" ON public.bookings;
+    CREATE POLICY "Allow public delete" ON public.bookings FOR DELETE USING (true);
+END
+$$;
 
 
 -- 4. SEED OCCASIONS DATA
@@ -138,11 +172,22 @@ CREATE TABLE IF NOT EXISTS public.leads (
 -- Enable Row Level Security
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 
--- Set Public Policies for Leads
-CREATE POLICY "Allow public insert" ON public.leads FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public read access" ON public.leads FOR SELECT USING (true);
-CREATE POLICY "Allow public update" ON public.leads FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON public.leads FOR DELETE USING (true);
+-- Set Public Policies for Leads using DO blocks
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Allow public insert" ON public.leads;
+    CREATE POLICY "Allow public insert" ON public.leads FOR INSERT WITH CHECK (true);
+    
+    DROP POLICY IF EXISTS "Allow public read access" ON public.leads;
+    CREATE POLICY "Allow public read access" ON public.leads FOR SELECT USING (true);
+    
+    DROP POLICY IF EXISTS "Allow public update" ON public.leads;
+    CREATE POLICY "Allow public update" ON public.leads FOR UPDATE USING (true);
+    
+    DROP POLICY IF EXISTS "Allow public delete" ON public.leads;
+    CREATE POLICY "Allow public delete" ON public.leads FOR DELETE USING (true);
+END
+$$;
 
 
 -- 7. CREATE ADMIN_SETTINGS TABLE
@@ -212,8 +257,41 @@ CREATE TABLE IF NOT EXISTS public.orders (
 -- Enable Row Level Security
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
--- Set Public Policies for Orders
-CREATE POLICY "Allow public insert on orders" ON public.orders FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public read on orders" ON public.orders FOR SELECT USING (true);
-CREATE POLICY "Allow public update on orders" ON public.orders FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete on orders" ON public.orders FOR DELETE USING (true);
+-- Set Public Policies for Orders using DO blocks
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Allow public insert on orders" ON public.orders;
+    CREATE POLICY "Allow public insert on orders" ON public.orders FOR INSERT WITH CHECK (true);
+    
+    DROP POLICY IF EXISTS "Allow public read on orders" ON public.orders;
+    CREATE POLICY "Allow public read on orders" ON public.orders FOR SELECT USING (true);
+    
+    DROP POLICY IF EXISTS "Allow public update on orders" ON public.orders;
+    CREATE POLICY "Allow public update on orders" ON public.orders FOR UPDATE USING (true);
+    
+    DROP POLICY IF EXISTS "Allow public delete on orders" ON public.orders;
+    CREATE POLICY "Allow public delete on orders" ON public.orders FOR DELETE USING (true);
+END
+$$;
+
+-- 10. CREATE STORAGE BUCKET FOR PRODUCT IMAGES (Crucial for uploads to succeed instead of failing over to massive Base64 strings)
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('product-images', 'product-images', true) 
+ON CONFLICT (id) DO NOTHING;
+
+-- Set Storage Policies for the bucket
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+    CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'product-images');
+    
+    DROP POLICY IF EXISTS "Public Insert" ON storage.objects;
+    CREATE POLICY "Public Insert" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'product-images');
+    
+    DROP POLICY IF EXISTS "Public Update" ON storage.objects;
+    CREATE POLICY "Public Update" ON storage.objects FOR UPDATE USING (bucket_id = 'product-images');
+    
+    DROP POLICY IF EXISTS "Public Delete" ON storage.objects;
+    CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = 'product-images');
+END
+$$;

@@ -8,6 +8,7 @@ export default function AdminView({
   setOccasionsMeta,
   bookings,
   dbMode,
+  isSyncing = false,
   leads = [],
   setLeads,
   settings,
@@ -379,74 +380,58 @@ export default function AdminView({
     }
 
     if (formMode === 'add') {
-      try {
-        const payload = {
-          id: productForm.id,
-          name: productForm.name,
-          category: productForm.category,
-          categoryTag: productForm.categoryTag,
-          price: Number(productForm.price),
-          buy_price: productForm.buy_price !== '' ? Number(productForm.buy_price) : null,
-          color: productForm.color,
-          occasions: productForm.occasions,
-          description: productForm.description,
-          materials: productForm.materials,
-          includes: productForm.includes,
-          rating: productForm.rating || 5,
-          img: productForm.img,
-          images: productForm.images || [],
-          bookedDates: productForm.bookedDates || []
-        };
-        const { error } = await supabase.from('products').insert(payload);
-        if (error) throw error;
-        setProducts((prev) => [...prev, payload]);
-        triggerNotification('Product added successfully to Supabase!');
-      } catch (err) {
-        console.warn('Supabase insert failed. Saving to local cache only.', err);
-        const payload = {
-          ...productForm,
-          price: Number(productForm.price),
-          buy_price: productForm.buy_price !== '' ? Number(productForm.buy_price) : null
-        };
-        setProducts((prev) => [...prev, payload]);
-        triggerNotification('Product saved locally (Offline Mode)');
+      const payload = {
+        id: productForm.id,
+        name: productForm.name,
+        category: productForm.category,
+        categoryTag: productForm.categoryTag,
+        price: Number(productForm.price),
+        buy_price: productForm.buy_price !== '' ? Number(productForm.buy_price) : null,
+        color: productForm.color,
+        occasions: productForm.occasions,
+        description: productForm.description,
+        materials: productForm.materials,
+        includes: productForm.includes,
+        rating: productForm.rating || 5,
+        img: productForm.img,
+        images: productForm.images || [],
+        bookedDates: productForm.bookedDates || []
+      };
+      const { error } = await supabase.from('products').insert(payload);
+      if (error) {
+        console.error('Supabase insert failed:', error);
+        triggerNotification(`Failed to add product: ${error.message}`, 'error');
+        return;
       }
+      setProducts((prev) => [...prev, payload]);
+      triggerNotification('Product added successfully to database!');
     } else {
-      try {
-        const payload = {
-          name: productForm.name,
-          category: productForm.category,
-          categoryTag: productForm.categoryTag,
-          price: Number(productForm.price),
-          buy_price: productForm.buy_price !== '' ? Number(productForm.buy_price) : null,
-          color: productForm.color,
-          occasions: productForm.occasions,
-          description: productForm.description,
-          materials: productForm.materials,
-          includes: productForm.includes,
-          rating: productForm.rating || 5,
-          img: productForm.img,
-          images: productForm.images || [],
-          bookedDates: productForm.bookedDates || []
-        };
-        const { error } = await supabase.from('products').update(payload).eq('id', productForm.id);
-        if (error) throw error;
-        setProducts((prev) =>
-          prev.map((p) => (p.id === productForm.id ? { ...productForm, ...payload } : p))
-        );
-        triggerNotification('Product updated successfully in Supabase!');
-      } catch (err) {
-        console.warn('Supabase update failed. Updating local cache only.', err);
-        const payload = {
-          ...productForm,
-          price: Number(productForm.price),
-          buy_price: productForm.buy_price !== '' ? Number(productForm.buy_price) : null
-        };
-        setProducts((prev) =>
-          prev.map((p) => (p.id === productForm.id ? payload : p))
-        );
-        triggerNotification('Product updated locally (Offline Mode)');
+      const payload = {
+        name: productForm.name,
+        category: productForm.category,
+        categoryTag: productForm.categoryTag,
+        price: Number(productForm.price),
+        buy_price: productForm.buy_price !== '' ? Number(productForm.buy_price) : null,
+        color: productForm.color,
+        occasions: productForm.occasions,
+        description: productForm.description,
+        materials: productForm.materials,
+        includes: productForm.includes,
+        rating: productForm.rating || 5,
+        img: productForm.img,
+        images: productForm.images || [],
+        bookedDates: productForm.bookedDates || []
+      };
+      const { error } = await supabase.from('products').update(payload).eq('id', productForm.id);
+      if (error) {
+        console.error('Supabase update failed:', error);
+        triggerNotification(`Failed to update product: ${error.message}`, 'error');
+        return;
       }
+      setProducts((prev) =>
+        prev.map((p) => (p.id === productForm.id ? { ...productForm, ...payload } : p))
+      );
+      triggerNotification('Product updated successfully in database!');
     }
 
     setIsFormOpen(false);
@@ -457,16 +442,14 @@ export default function AdminView({
       'Delete Product',
       `Are you sure you want to delete product "${productId}"? This cannot be undone.`,
       async () => {
-        try {
-          const { error } = await supabase.from('products').delete().eq('id', productId);
-          if (error) throw error;
-          setProducts((prev) => prev.filter((p) => p.id !== productId));
-          triggerNotification('Product deleted successfully from Supabase.', 'info');
-        } catch (err) {
-          console.warn('Supabase delete failed. Deleting from local cache only.', err);
-          setProducts((prev) => prev.filter((p) => p.id !== productId));
-          triggerNotification('Product deleted locally (Offline Mode).', 'info');
+        const { error } = await supabase.from('products').delete().eq('id', productId);
+        if (error) {
+          console.error('Supabase delete failed:', error);
+          triggerNotification(`Failed to delete product: ${error.message}`, 'error');
+          return;
         }
+        setProducts((prev) => prev.filter((p) => p.id !== productId));
+        triggerNotification('Product deleted successfully from database.', 'info');
       }
     );
   };
@@ -985,12 +968,12 @@ export default function AdminView({
             {/* Stat Cards */}
             <div className="responsive-auto-grid" style={{ marginBottom: '2.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
               {[
-                { title: 'Active Inventory', count: `${products.length} Sets`, desc: 'Total jewelry items', icon: 'fa-gem', bg: '#fdfcf7' },
-                { title: 'Appointments Booked', count: `${bookings.length} Slots`, desc: 'Through web scheduler', icon: 'fa-book-bookmark', bg: '#fbf8fa' },
-                { title: 'Blocked Calendar Dates', count: `${totalBlockedDatesCount} Days`, desc: 'Dates blocked out', icon: 'fa-calendar-xmark', bg: '#f7fbf9' },
-                { title: 'Est. Booking Deposits', count: `₹${totalRevenue.toLocaleString('en-IN')}`, desc: '30% security deposit logs', icon: 'fa-indian-rupee-sign', bg: '#fdf9f7' },
-                { title: 'Pending Buy Orders', count: `${pendingOrdersCount} Orders`, desc: 'Requires confirmation', icon: 'fa-bag-shopping', bg: '#fffaf0' },
-                { title: 'Outright Buy Sales', count: `₹${ordersRevenue.toLocaleString('en-IN')}`, desc: 'Excluding cancelled orders', icon: 'fa-coins', bg: '#f0f9ff' }
+                { title: 'Active Inventory', count: isSyncing ? 'Syncing...' : `${products.length} Sets`, desc: 'Total jewelry items', icon: 'fa-gem', bg: '#fdfcf7' },
+                { title: 'Appointments Booked', count: isSyncing ? 'Syncing...' : `${bookings.length} Slots`, desc: 'Through web scheduler', icon: 'fa-book-bookmark', bg: '#fbf8fa' },
+                { title: 'Blocked Calendar Dates', count: isSyncing ? 'Syncing...' : `${totalBlockedDatesCount} Days`, desc: 'Dates blocked out', icon: 'fa-calendar-xmark', bg: '#f7fbf9' },
+                { title: 'Est. Booking Deposits', count: isSyncing ? 'Syncing...' : `₹${totalRevenue.toLocaleString('en-IN')}`, desc: '30% security deposit logs', icon: 'fa-indian-rupee-sign', bg: '#fdf9f7' },
+                { title: 'Pending Buy Orders', count: isSyncing ? 'Syncing...' : `${pendingOrdersCount} Orders`, desc: 'Requires confirmation', icon: 'fa-bag-shopping', bg: '#fffaf0' },
+                { title: 'Outright Buy Sales', count: isSyncing ? 'Syncing...' : `₹${ordersRevenue.toLocaleString('en-IN')}`, desc: 'Excluding cancelled orders', icon: 'fa-coins', bg: '#f0f9ff' }
               ].map((card, idx) => (
                 <div key={idx} style={{
                   backgroundColor: 'var(--color-white)',

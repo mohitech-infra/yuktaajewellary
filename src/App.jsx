@@ -22,57 +22,18 @@ export default function App() {
   const [route, setRoute] = useState('home');
   const [routeParam, setRouteParam] = useState('');
   const [dbMode, setDbMode] = useState('Local Cache');
+  const [isSyncing, setIsSyncing] = useState(true);
 
-  // Local Database State (Cached Defaults)
+  // Always start with empty/default state — DB is the single source of truth.
+  // Wipe any stale product cache from localStorage immediately.
   const [products, setProducts] = useState(() => {
-    try {
-      const saved = localStorage.getItem('yuktaa_products_v2');
-      if (saved && saved !== 'undefined' && saved !== 'null') {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Merge buy_price from static data for any cached products missing it
-          return parsed.map((p) => {
-            if (p.buy_price != null) return p;
-            const localMatch = PRODUCTS.find((lp) => lp.id === p.id);
-            return { ...p, buy_price: localMatch ? localMatch.buy_price : null };
-          });
-        }
-      }
-    } catch (e) {
-      console.error('Error loading products from localStorage:', e);
-    }
-    return PRODUCTS;
-  });
-
-  const [occasionsMeta, setOccasionsMeta] = useState(() => {
-    try {
-      const saved = localStorage.getItem('yuktaa_occasions_meta_v2');
-      if (saved && saved !== 'undefined' && saved !== 'null') {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.error('Error loading occasionsMeta from localStorage:', e);
-    }
-    return OCCASIONS_META;
-  });
-
-  const [bookings, setBookings] = useState(() => {
-    try {
-      const saved = localStorage.getItem('yuktaa_bookings');
-      if (saved && saved !== 'undefined' && saved !== 'null') {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.error('Error loading bookings from localStorage:', e);
-    }
+    localStorage.removeItem('yuktaa_products_v2');
     return [];
   });
+
+  const [occasionsMeta, setOccasionsMeta] = useState(OCCASIONS_META);
+
+  const [bookings, setBookings] = useState([]);
 
   const [leads, setLeads] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -84,13 +45,13 @@ export default function App() {
       welcome_voucher_min_bill: 6000,
       wallet_redeem_limit_pct: 50,
       wallet_terms: [
-        "The welcome discount voucher code is valid for first-time clients only.",
-        "This offer is restricted to one claim per device/browser session.",
-        "Voucher code is valid for 1 year from the date of activation.",
-        "Discount is applicable on jewellery rental bookings only and cannot be exchanged for cash.",
-        "Applicable at our Goregaon West boutique styling session.",
-        "Wallet balance can be redeemed for up to 50% of the bill amount.",
-        "The welcome offer of ₹2,000 is applicable on a minimum bill of ₹6,000."
+        'The welcome discount voucher code is valid for first-time clients only.',
+        'This offer is restricted to one claim per device/browser session.',
+        'Voucher code is valid for 1 year from the date of activation.',
+        'Discount is applicable on jewellery rental bookings only and cannot be exchanged for cash.',
+        'Applicable at our Goregaon West boutique styling session.',
+        'Wallet balance can be redeemed for up to 50% of the bill amount.',
+        'The welcome offer of ₹2,000 is applicable on a minimum bill of ₹6,000.'
       ]
     };
     try {
@@ -107,34 +68,17 @@ export default function App() {
     return defaultSettings;
   });
 
-  // Sync state changes with localStorage (Client-side offline cache)
+  // Persist settings to localStorage (these are small config values, safe to cache)
   useEffect(() => {
     if (settings) {
       localStorage.setItem('yuktaa_settings', JSON.stringify(settings));
     }
   }, [settings]);
 
-  useEffect(() => {
-    if (products) {
-      localStorage.setItem('yuktaa_products_v2', JSON.stringify(products));
-    }
-  }, [products]);
-
-  useEffect(() => {
-    if (occasionsMeta) {
-      localStorage.setItem('yuktaa_occasions_meta_v2', JSON.stringify(occasionsMeta));
-    }
-  }, [occasionsMeta]);
-
-  useEffect(() => {
-    if (bookings) {
-      localStorage.setItem('yuktaa_bookings', JSON.stringify(bookings));
-    }
-  }, [bookings]);
-
-  // Supabase Background Live Database Synchronizer
+  // Supabase Live Database Synchronizer — DB is always the source of truth
   useEffect(() => {
     async function syncWithSupabase() {
+      setIsSyncing(true);
       try {
         // 1. Fetch live products
         const { data: dbProducts, error: prodError } = await supabase
@@ -142,19 +86,20 @@ export default function App() {
           .select('*')
           .order('created_at', { ascending: true });
 
-        if (!prodError && dbProducts && dbProducts.length > 0) {
-          // Merge buy_price from local static data as fallback
-          // (in case the buy_price DB migration hasn't been run yet)
-          const mergedProducts = dbProducts.map((dbProd) => {
-            const localMatch = PRODUCTS.find((lp) => lp.id === dbProd.id);
-            return {
-              ...dbProd,
-              buy_price: dbProd.buy_price ?? (localMatch ? localMatch.buy_price : null),
-            };
-          });
-          setProducts(mergedProducts);
-          setDbMode('Live Database');
-        }
+        if (prodError) throw prodError;
+
+        // Connection confirmed — always set Live Database mode
+        setDbMode('Live Database');
+
+        // Always replace state with DB data (even if empty)
+        const mergedProducts = (dbProducts || []).map((dbProd) => {
+          const localMatch = PRODUCTS.find((lp) => lp.id === dbProd.id);
+          return {
+            ...dbProd,
+            buy_price: dbProd.buy_price ?? (localMatch ? localMatch.buy_price : null),
+          };
+        });
+        setProducts(mergedProducts);
 
         // 2. Fetch live occasions
         const { data: dbOccasions, error: occError } = await supabase
@@ -200,17 +145,7 @@ export default function App() {
           setLeads(dbLeads);
         }
 
-        // 5. Fetch live orders
-        const { data: dbOrders, error: ordersError } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (!ordersError && dbOrders) {
-          setOrders(dbOrders);
-        }
-
-        // 6. Fetch live settings
+        // 5. Fetch live settings
         const { data: dbSettings, error: settingsError } = await supabase
           .from('admin_settings')
           .select('*');
@@ -222,7 +157,7 @@ export default function App() {
               try {
                 settingsObj.wallet_terms = JSON.parse(item.value);
               } catch (e) {
-                console.error("Error parsing wallet_terms from Supabase", e);
+                console.error('Error parsing wallet_terms from Supabase', e);
               }
             } else if (item.key === 'welcome_voucher_code') {
               settingsObj.welcome_voucher_code = item.value;
@@ -237,7 +172,12 @@ export default function App() {
           setSettings((prev) => ({ ...prev, ...settingsObj }));
         }
       } catch (err) {
-        console.warn('Supabase initialization warning or offline mode. Using Local Cache.', err);
+        console.warn('Supabase sync failed. Falling back to static data.', err);
+        setDbMode('Local Cache');
+        // Only use static data as last resort
+        setProducts(PRODUCTS);
+      } finally {
+        setIsSyncing(false);
       }
     }
     syncWithSupabase();
@@ -377,6 +317,7 @@ export default function App() {
             setOccasionsMeta={setOccasionsMeta}
             bookings={bookings}
             dbMode={dbMode}
+            isSyncing={isSyncing}
             leads={leads}
             setLeads={setLeads}
             settings={settings}

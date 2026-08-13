@@ -1,127 +1,114 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
-export default function Navbar({ currentRoute, onOpenBookingModal }) {
+export default function Navbar({ 
+  currentRoute, 
+  cartCount, 
+  wishlistCount, 
+  onOpenAuthModal, 
+  onOpenWishlistModal, 
+  onOpenCartModal 
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isSolid, setIsSolid] = useState(false);
-  const [isClaimed, setIsClaimed] = useState(false);
-
-  useEffect(() => {
-    const checkClaimed = () => {
-      setIsClaimed(!!localStorage.getItem('yuktaa_claimed_offer'));
-    };
-    checkClaimed();
-    window.addEventListener('wallet-update', checkClaimed);
-    return () => window.removeEventListener('wallet-update', checkClaimed);
-  }, []);
-
-  const handleWalletClick = () => {
-    window.location.hash = '#wallet';
-  };
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (currentRoute === 'home' && window.scrollY < 100) {
-        setIsSolid(false);
-      } else {
-        setIsSolid(true);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Initial check
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [currentRoute]);
-
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [currentRoute]);
 
   const navItems = [
     { label: 'Home', route: 'home', hash: '#home' },
     { label: 'Our Collection', route: 'collection', hash: '#collection' },
     { label: 'Occasions', route: 'occasions', hash: '#occasions' },
-    { label: 'How It Works', route: 'how-it-works', hash: '#how-it-works' },
-    { label: 'Lookbook', route: 'lookbook', hash: '#lookbook' },
     { label: 'Contact', route: 'contact', hash: '#contact' },
   ];
 
   return (
-    <nav className={`navbar ${isSolid ? 'solid' : 'transparent'}`} id="main-navbar">
-      <div className="container">
-        {/* Left: Logo */}
-        <a href="#home" className="logo-container">
-          <span className={`logo-main ${!isSolid ? 'white-text' : ''}`} id="logo-text-main">
-            YUKTAA
-          </span>
-          <span className="logo-sub">Designer Jewellery</span>
-          <span className={`logo-owner ${!isSolid ? 'white-text' : ''}`} id="logo-text-owner">
-            by Varsha Jain
-          </span>
-        </a>
+    <>
 
-        {/* Center Nav Links (Hidden on Mobile) */}
-        <ul className={`nav-links ${mobileMenuOpen ? 'open' : ''} hide-on-mobile`} id="navbar-links">
-          {navItems.map((item) => (
-            <li key={item.route}>
-              <a
-                href={item.hash}
-                className={`nav-item ${currentRoute === item.route ? 'active' : ''}`}
-                data-page={item.route}
-              >
-                {item.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-
-        {/* Right Actions (WhatsApp + Booking Button) */}
-        <div className="nav-actions">
-          {/* Wallet Section */}
+      <nav className="navbar solid" id="main-navbar" style={{ position: 'relative', height: 'auto', borderBottom: 'none', padding: '4px 0', backgroundColor: '#a7b165' }}>
+        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          
+          {/* Left: Hamburger */}
           <div 
-            className={`wallet-pill ${isClaimed ? 'claimed' : 'unclaimed'}`}
-            onClick={handleWalletClick}
-            title={isClaimed ? "Your Wallet Balance" : "Click to claim ₹2,000 welcome gift"}
-            style={{ marginRight: '0.5rem' }}
-          >
-            {isClaimed ? (
-              <>
-                <i className="fa-solid fa-wallet" style={{ color: 'var(--color-accent)' }}></i>
-                <span>₹2,000</span>
-              </>
-            ) : (
-              <>
-                <i className="fa-solid fa-gift"></i>
-                <span className="wallet-waiting-text">₹2,000 Waiting</span>
-                <span className="wallet-mobile-text">₹2,000</span>
-              </>
-            )}
-          </div>
-
-          <a
-            href="https://wa.me/919987600673?text=Hi%20Varsha,%20I%20would%20like%20to%20enquire%20about%20booking%20a%20slot%20at%20your%20boutique."
-            target="_blank"
-            rel="noopener noreferrer"
-            className="whatsapp-btn-nav"
-            aria-label="Contact on WhatsApp"
-          >
-            <i className="fa-brands fa-whatsapp"></i>
-          </a>
-          <button className="btn btn-accent btn-shimmer hide-on-mobile" onClick={onOpenBookingModal}>
-            Book Your Slot
-          </button>
-          <div
-            className={`hamburger ${mobileMenuOpen ? 'open' : ''} hide-on-mobile`}
-            id="mobile-menu-toggle"
+            className="hamburger open" 
+            style={{ display: 'flex', cursor: 'pointer', zIndex: 1001 }}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <span></span>
-            <span></span>
-            <span></span>
+            <i className="fa-solid fa-bars" style={{ fontSize: '1.5rem', color: 'var(--color-text)' }}></i>
+          </div>
+
+          <a href="#home" className="logo-container" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+            <img src="/assets/yuktaa_logo.png" alt="Yuktaa Logo" style={{ height: '55px', width: 'auto', display: 'block' }} />
+          </a>
+
+          {/* Right: Icons */}
+          <div className="nav-actions" style={{ display: 'flex', gap: '18px', alignItems: 'center', color: 'var(--color-text)' }}>
+            <i 
+              className="fa-regular fa-user" 
+              style={{ fontSize: '1.2rem', cursor: 'pointer' }}
+              onClick={onOpenAuthModal}
+              title="Sign In / Account"
+            />
+            
+            <div 
+              style={{ position: 'relative', cursor: 'pointer' }}
+              onClick={onOpenWishlistModal}
+              title="Wishlist"
+            >
+              <i className="fa-regular fa-heart" style={{ fontSize: '1.2rem' }} />
+              {wishlistCount > 0 && (
+                <span style={{ position: 'absolute', top: '-5px', right: '-8px', background: 'var(--color-primary)', color: 'white', fontSize: '0.6rem', padding: '2px 5px', borderRadius: '50%' }}>
+                  {wishlistCount}
+                </span>
+              )}
+            </div>
+
+            <div 
+              style={{ position: 'relative', cursor: 'pointer' }}
+              onClick={onOpenCartModal}
+              title="Cart"
+            >
+              <i className="fa-solid fa-cart-shopping" style={{ fontSize: '1.2rem' }} />
+              {cartCount > 0 && (
+                <span style={{ position: 'absolute', top: '-5px', right: '-8px', background: 'var(--color-primary)', color: 'white', fontSize: '0.6rem', padding: '2px 5px', borderRadius: '50%' }}>
+                  {cartCount}
+                </span>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: 'white', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+            <ul style={{ listStyle: 'none', padding: '1rem', margin: 0 }}>
+              {navItems.map((item) => (
+                <li key={item.route} style={{ padding: '0.8rem 0', borderBottom: '1px solid var(--color-border)' }}>
+                  <a
+                    href={item.hash}
+                    style={{ color: currentRoute === item.route ? 'var(--color-primary)' : 'var(--color-text)', fontWeight: 500, textTransform: 'uppercase', fontSize: '0.9rem' }}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </nav>
+
+      {/* Search Bar Row */}
+      <div style={{ background: '#f4f4f4', padding: '10px 1rem', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: '1280px' }}>
+          <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#888' }}></i>
+          <input 
+            type="text" 
+            placeholder="Search For Jewellery" 
+            style={{ width: '100%', padding: '12px 12px 12px 45px', border: '1px solid #e0e0e0', borderRadius: '4px', fontSize: '0.95rem', background: 'transparent' }} 
+          />
+        </div>
       </div>
-    </nav>
+
+      {/* Free Shipping Banner */}
+      <div style={{ backgroundColor: '#909c4d', color: 'white', textAlign: 'center', padding: '0.5rem', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
+        FREE SHIPPING FOR PREPAID ORDERS
+      </div>
+    </>
   );
 }

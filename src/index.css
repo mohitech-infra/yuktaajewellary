@@ -10,27 +10,27 @@
 
 /* --- Brand CSS Variables --- */
 :root {
-  --color-primary: #501B3A;       /* Royal Mulberry / Lavender Plum */
-  --color-primary-rgb: 80, 27, 58;
-  --color-accent: #D4AF37;        /* Royal Gold */
-  --color-accent-rgb: 212, 175, 55;
-  --color-accent-hover: #B89326;
-  --color-accent-light: #F5E5EF;  /* Soft Lavender Rose */
-  --color-bg: #FAF6F8;            /* Lavender Blush / Off-White */
-  --color-text: #2E2129;          /* Deep Mulberry Charcoal */
-  --color-text-muted: #6E5A65;    /* Muted Rose Charcoal */
+  --color-primary: #8b9a54;       /* Olive Green */
+  --color-primary-rgb: 139, 154, 84;
+  --color-accent: #9cac62;        /* Soft Olive */
+  --color-accent-rgb: 156, 172, 98;
+  --color-accent-hover: #738340;  /* Darker Olive */
+  --color-accent-light: #f2f4ea;  /* Very Light Olive */
+  --color-bg: #faf6f0;            /* Warm Cream */
+  --color-text: #2c2c2c;          /* Dark Grey */
+  --color-text-muted: #757575;    /* Muted Grey */
   --color-white: #FFFFFF;
-  --color-card-bg: #FFFFFF;
-  --color-border: #E8D8E0;        /* Soft Lavender Rose Border */
+  --color-card-bg: rgba(255, 255, 255, 0.85);
+  --color-border: #e3e8d3;        /* Light Olive Border */
   
   --font-serif: 'Cormorant Garamond', Georgia, serif;
   --font-sans: 'DM Sans', sans-serif;
   
   --transition-smooth: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   --transition-fast: all 0.2s ease;
-  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.03);
-  --shadow-medium: 0 10px 30px rgba(var(--color-primary-rgb), 0.08);
-  --shadow-premium: 0 20px 45px rgba(var(--color-primary-rgb), 0.12);
+  --shadow-subtle: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-premium: 0 16px 32px rgba(139, 154, 84, 0.15);
   
   --container-max-width: 1320px;
   --header-height: 80px;
@@ -54,7 +54,7 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-bg);
+  background-color: #faf6f0;
   color: var(--color-text);
   line-height: 1.6;
   overflow-x: hidden;
@@ -399,16 +399,16 @@ button {
 .hamburger span {
   width: 100%;
   height: 2px;
-  background-color: var(--color-white);
+  background-color: transparent;
   transition: var(--transition-smooth);
 }
 
 .navbar.transparent .hamburger span {
-  background-color: var(--color-white);
+  background-color: transparent;
 }
 
 .navbar.solid .hamburger span {
-  background-color: var(--color-white);
+  background-color: transparent;
 }
 
 /* Mobile Nav Open */
@@ -696,16 +696,19 @@ button {
   background-color: var(--color-card-bg);
   border: 1px solid var(--color-border);
   position: relative;
-  transition: var(--transition-smooth);
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transform-style: preserve-3d;
+  perspective: 1000px;
 }
 
 .product-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-medium);
-  border-color: rgba(183, 149, 11, 0.4);
+  transform: translateY(-10px) rotateX(4deg) rotateY(4deg) scale(1.02);
+  box-shadow: -15px 15px 30px rgba(139, 154, 84, 0.15), 0 10px 10px rgba(0,0,0,0.05);
+  border-color: var(--color-primary);
+  z-index: 10;
 }
 
 .card-img-wrapper {
@@ -1016,7 +1019,7 @@ button {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 2px solid var(--color-accent);
   color: var(--color-primary);
   font-family: var(--font-serif);
@@ -1369,7 +1372,7 @@ button {
 }
 
 .filter-bar {
-  background-color: var(--color-white);
+  background-color: transparent;
   border-bottom: 1px solid var(--color-border);
   padding: 1.5rem 0;
   position: sticky;
@@ -1613,7 +1616,7 @@ button {
 
 .prod-price-box {
   padding: 1.5rem;
-  background-color: var(--color-white);
+  background-color: transparent;
   border-left: 3px solid var(--color-accent);
   border-bottom: 1px solid var(--color-border);
   border-right: 1px solid var(--color-border);
@@ -1725,7 +1728,7 @@ button {
 .legend-dot.booked { background-color: #E74C3C; }
 
 .calendar-box {
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 1px solid var(--color-border);
   padding: 1.5rem;
 }
@@ -1868,7 +1871,7 @@ button {
 }
 
 .how-detail-card {
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 1px solid var(--color-border);
   padding: 3rem 2rem;
   text-align: center;
@@ -2032,7 +2035,7 @@ button {
   margin-top: 4rem;
   text-align: center;
   padding: 3rem;
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 1px solid var(--color-border);
 }
 
@@ -2113,7 +2116,7 @@ button {
 
 /* Contact Form */
 .contact-form-card {
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 1px solid var(--color-border);
   padding: 3rem;
 }
@@ -2174,7 +2177,7 @@ button {
 
 .form-input:focus {
   border-color: var(--color-accent);
-  background-color: var(--color-white);
+  background-color: transparent;
 }
 
 textarea.form-input {
@@ -2262,7 +2265,7 @@ textarea.form-input {
   display: flex;
   justify-content: space-between;
   padding: 1.5rem 3rem;
-  background-color: var(--color-white);
+  background-color: transparent;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -2351,7 +2354,7 @@ textarea.form-input {
 }
 
 .booking-summary-card {
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 1px solid var(--color-border);
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -2432,7 +2435,7 @@ textarea.form-input {
 
 .rzp-method-option {
   border: 1px solid #EAEAEA;
-  background-color: var(--color-white);
+  background-color: transparent;
   padding: 0.8rem 1rem;
   border-radius: 4px;
   display: flex;
@@ -2484,7 +2487,7 @@ textarea.form-input {
   gap: 1rem;
   border-top: 1px solid var(--color-border);
   padding: 1.5rem 2.5rem;
-  background-color: var(--color-white);
+  background-color: transparent;
 }
 
 @media (max-width: 576px) {
@@ -2637,7 +2640,7 @@ textarea.form-input {
 }
 
 .newsletter-btn:hover {
-  background-color: var(--color-white);
+  background-color: transparent;
   color: var(--color-primary);
 }
 
@@ -2990,7 +2993,7 @@ textarea.form-input {
 .admin-auth-container {
   width: 100%;
   max-width: 420px;
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 1px solid var(--color-border);
   border-radius: 12px;
   box-shadow: var(--shadow-premium);
@@ -3192,7 +3195,7 @@ textarea.form-input {
     height: 44px;
     border-radius: 50%;
     border: 1px solid var(--color-accent);
-    background-color: var(--color-white);
+    background-color: transparent;
     color: var(--color-primary);
     display: flex;
     align-items: center;
@@ -3469,7 +3472,7 @@ textarea.form-input {
   bottom: 5px;
   width: 290px;
   height: 180px;
-  background: #fff;
+  background: transparent;
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   z-index: 2;
@@ -3715,7 +3718,7 @@ textarea.form-input {
 }
 
 .digital-wallet-card.active-card {
-  background: linear-gradient(135deg, #501b3a 0%, #2f0b21 50%, #170410 100%);
+  background: linear-gradient(135deg, #8b9a54 0%, #5d6837 50%, #2f341b 100%);
 }
 
 .digital-wallet-card::before {
@@ -3758,7 +3761,7 @@ textarea.form-input {
 }
 
 .digital-wallet-card.inactive-card {
-  background: linear-gradient(135deg, #3d3439 0%, #1e191c 100%);
+  background: linear-gradient(135deg, #747f48 0%, #3a3f23 100%);
   filter: grayscale(0.5);
   opacity: 0.8;
 }
@@ -3865,7 +3868,7 @@ textarea.form-input {
 .wallet-status-box {
   margin-top: 1.5rem;
   padding: 1rem;
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   box-shadow: var(--shadow-subtle);
@@ -3902,7 +3905,7 @@ textarea.form-input {
 
 /* Right Column Sign up Card */
 .wallet-signup-card, .redemption-guide-card {
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 2rem;
@@ -3938,7 +3941,7 @@ textarea.form-input {
 .wallet-form-input:focus {
   outline: none;
   border-color: var(--color-primary);
-  background-color: var(--color-white);
+  background-color: transparent;
 }
 
 /* Redemption guide steps */
@@ -3983,7 +3986,7 @@ textarea.form-input {
 
 /* Terms and Conditions styling */
 .wallet-terms-box {
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 2rem;
@@ -4043,7 +4046,7 @@ textarea.form-input {
 }
 
 .bom-modal {
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 1px solid var(--color-border);
   border-radius: 16px;
   width: 100%;
@@ -4137,7 +4140,7 @@ textarea.form-input {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background-color: var(--color-white);
+  background-color: transparent;
   border: 2px solid var(--color-border);
   display: flex;
   align-items: center;
@@ -4280,7 +4283,7 @@ textarea.form-input {
   font-size: 0.9rem;
   color: var(--color-primary);
   outline: none;
-  background-color: var(--color-white);
+  background-color: transparent;
   transition: all 0.2s;
 }
 

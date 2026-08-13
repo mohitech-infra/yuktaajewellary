@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-export default function ProductCard({ product, isActive, className = '' }) {
+export default function ProductCard({ product, isActive, className = '', addToCart, addToWishlist, isWishlisted }) {
   const cardRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -31,44 +31,58 @@ export default function ProductCard({ product, isActive, className = '' }) {
     <div
       ref={cardRef}
       className={`product-card ${isActive ? 'active-card' : ''} ${isVisible ? 'card-entrance-visible' : 'card-entrance-hidden'} ${className}`}
-      onClick={() => {
-        window.location.hash = `#product/${product.id}`;
-      }}
-      style={{ cursor: 'pointer' }}
+      style={{ backgroundColor: 'white', border: 'none', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
     >
-      <span className="card-category">{product.categoryTag}</span>
-      <div className="card-img-wrapper">
+      <div 
+        onClick={(e) => {
+          e.stopPropagation();
+          if(addToWishlist) addToWishlist(product);
+        }}
+        style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.8)', padding: '5px', borderRadius: '50%' }}
+      >
+        <i className={isWishlisted ? "fa-solid fa-heart" : "fa-regular fa-heart"} style={{ color: isWishlisted ? 'var(--color-primary)' : '#888', fontSize: '1.2rem' }}></i>
+      </div>
+
+      <div 
+        className="card-img-wrapper" 
+        style={{ aspectRatio: '2/3', overflow: 'hidden', cursor: 'pointer' }}
+        onClick={() => {
+          window.location.hash = `#product/${product.id}`;
+        }}
+      >
         <div
           className="card-placeholder"
           style={{
-            backgroundImage: isVisible ? `linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.15)), url('${product.img}')` : 'none',
+            backgroundImage: isVisible ? `url('${product.img}')` : 'none',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             height: '100%',
             width: '100%',
             backgroundColor: 'var(--color-accent-light)',
+            transition: 'transform 0.4s ease'
           }}
         >
-          {/* Cover image via style */}
-        </div>
-        <div className="card-action-overlay">
-          <button className="card-btn">Check Availability</button>
         </div>
       </div>
-      <div className="card-info">
-        <h3 className="card-title">{product.name}</h3>
-        <span className="card-meta">Occasion: {product.occasions.join(' · ')}</span>
-        <div className="card-price-row">
-          <span className="card-price-label">Rental Price</span>
-          <span className="card-price">
-            ₹{product.price.toLocaleString('en-IN')}{' '}
-            <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'var(--color-text-muted)' }}>
-              / event
-            </span>
+      <div className="card-info" style={{ padding: '15px 10px', textAlign: 'center', backgroundColor: '#fff', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: 500, fontFamily: 'var(--font-sans)', color: 'var(--color-text)', marginBottom: '5px' }}>{product.name}</h3>
+          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text)' }}>
+            Rs. {product.price.toLocaleString('en-IN')}
           </span>
+        </div>
+        <div style={{ marginTop: '15px', borderTop: '1px solid var(--color-primary)' }}>
+          <button 
+            style={{ width: '100%', padding: '10px 0', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', textTransform: 'uppercase', cursor: 'pointer' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if(addToCart) addToCart(product);
+            }}
+          >
+            +ADD
+          </button>
         </div>
       </div>
     </div>
   );
 }
-

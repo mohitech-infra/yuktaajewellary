@@ -61,7 +61,7 @@ export default function CollectionView({ products }) {
       <section className="collection-hero">
         <div>
           <h1 className="brand-font">Our Collection</h1>
-          <p style={{ letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.85rem', color: 'var(--color-accent)', marginTop: '0.5rem' }}>
+          <p style={{ letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.85rem', color: '#ffffff', fontWeight: 600, opacity: 0.95, marginTop: '0.5rem' }}>
             Explore our premium pieces curated for you
           </p>
         </div>

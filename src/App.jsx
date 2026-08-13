@@ -3,6 +3,9 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BookingModal from './components/BookingModal';
 import BuyOrderModal from './components/BuyOrderModal';
+import AuthModal from './components/AuthModal';
+import CartModal from './components/CartModal';
+import WishlistModal from './components/WishlistModal';
 import BottomNav from './components/BottomNav';
 import { PRODUCTS, OCCASIONS_META } from './data/products';
 import { supabase } from './utils/supabaseClient';
@@ -37,6 +40,96 @@ export default function App() {
 
   const [leads, setLeads] = useState([]);
   const [orders, setOrders] = useState([]);
+
+  const [cart, setCart] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
+
+  // Modals state
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [cartModalOpen, setCartModalOpen] = useState(false);
+  const [wishlistModalOpen, setWishlistModalOpen] = useState(false);
+
+  const removeFromCart = (id) => {
+    setCart((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const removeFromWishlist = (id) => {
+    setWishlist((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const addToCart = (product) => {
+    setCart((prev) => {
+      if (prev.find((item) => item.id === product.id)) return prev;
+      return [...prev, product];
+    });
+    alert(`${product.name} added to cart!`);
+  };
+
+  const addToWishlist = (product) => {
+    setWishlist((prev) => {
+      if (prev.find((item) => item.id === product.id)) {
+        return prev.filter((item) => item.id !== product.id);
+      }
+      return [...prev, product];
+    });
+  };
+
+  const DEFAULT_HOME_PHOTOS = {
+    categories: [
+      { name: 'Bracelet/Bangles', img: '/assets/jewel_74.jpeg' },
+      { name: 'Earrings', img: '/assets/jewel_66.jpeg' },
+      { name: 'Jewellery Sets', img: '/assets/jewel_67.jpeg' },
+      { name: 'Necklace', img: '/assets/jewel_68.jpeg' },
+    ],
+    exploreCategories: [
+      { name: 'BRACELET/BANGLES', img: '/assets/jewel_74.jpeg' },
+      { name: 'EARRINGS', img: '/assets/jewel_66.jpeg' },
+      { name: 'JEWELLERY SETS', img: '/assets/jewel_67.jpeg' },
+      { name: 'NECKLACE', img: '/assets/jewel_68.jpeg' },
+      { name: 'PENDANT SETS', img: '/assets/jewel_69.jpeg' },
+      { name: 'HAND HARNESS', img: '/assets/jewel_73.jpeg' },
+      { name: 'RINGS', img: '/assets/jewel_35.jpeg' },
+      { name: 'MANGALSUTRA', img: '/assets/jewel_36.jpeg' },
+      { name: 'NOSE RINGS', img: '/assets/jewel_37.jpeg' },
+      { name: 'HEADGEARS', img: '/assets/jewel_38.jpeg' }
+    ],
+    promoImages: [
+      '/assets/jewel_74.jpeg',
+      '/assets/jewel_66.jpeg',
+      '/assets/jewel_67.jpeg',
+      '/assets/jewel_68.jpeg',
+    ],
+    lookbookItems: [
+      { name: 'Yuktaa Bride', occ: 'Bridal Polki Look', img: '/assets/jewel_74.jpeg' },
+      { name: 'Yuktaa Bride', occ: 'Reception Elegance', img: '/assets/jewel_66.jpeg' },
+      { name: 'Yuktaa Bride', occ: 'Festive Glam', img: '/assets/jewel_67.jpeg' },
+      { name: 'Yuktaa Bride', occ: 'Sangeet Night', img: '/assets/jewel_68.jpeg' },
+      { name: 'Yuktaa Bride', occ: 'Wedding Celebration', img: '/assets/jewel_69.jpeg' },
+      { name: 'Yuktaa Bride', occ: 'Bridal Look', img: '/assets/jewel_71.jpeg' },
+      { name: 'Yuktaa Bride', occ: 'Heritage Style', img: '/assets/jewel_73.jpeg' },
+    ]
+  };
+
+  const [homePhotos, setHomePhotos] = useState(() => {
+    try {
+      const saved = localStorage.getItem('yuktaa_home_photos_v1');
+      if (saved && saved !== 'undefined' && saved !== 'null') {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return { ...DEFAULT_HOME_PHOTOS, ...parsed };
+        }
+      }
+    } catch (e) {
+      console.error('Error loading homePhotos from localStorage:', e);
+    }
+    return DEFAULT_HOME_PHOTOS;
+  });
+
+  useEffect(() => {
+    if (homePhotos) {
+      localStorage.setItem('yuktaa_home_photos_v1', JSON.stringify(homePhotos));
+    }
+  }, [homePhotos]);
 
   const [settings, setSettings] = useState(() => {
     const defaultSettings = {
@@ -153,7 +246,16 @@ export default function App() {
         if (!settingsError && dbSettings && dbSettings.length > 0) {
           const settingsObj = {};
           dbSettings.forEach((item) => {
-            if (item.key === 'wallet_terms') {
+            if (item.key === 'home_photos_cms') {
+              try {
+                const parsedHomePhotos = JSON.parse(item.value);
+                if (parsedHomePhotos && typeof parsedHomePhotos === 'object') {
+                  setHomePhotos((prev) => ({ ...prev, ...parsedHomePhotos }));
+                }
+              } catch (e) {
+                console.error('Error parsing home_photos_cms from Supabase', e);
+              }
+            } else if (item.key === 'wallet_terms') {
               try {
                 settingsObj.wallet_terms = JSON.parse(item.value);
               } catch (e) {
@@ -279,7 +381,18 @@ export default function App() {
   const renderView = () => {
     switch (route) {
       case 'home':
-        return <HomeView products={products} onOpenBookingModal={handleOpenBookingModal} settings={settings} />;
+        return (
+          <HomeView 
+            products={products} 
+            onOpenBookingModal={handleOpenBookingModal} 
+            settings={settings}
+            homePhotos={homePhotos}
+            addToCart={addToCart}
+            addToWishlist={addToWishlist}
+            cart={cart}
+            wishlist={wishlist}
+          />
+        );
       case 'collection':
         return <CollectionView products={products} />;
       case 'occasions':
@@ -298,16 +411,20 @@ export default function App() {
             products={products}
             onOpenBookingModal={handleOpenBookingModal}
             onOpenBuyModal={handleOpenBuyModal}
+            addToCart={addToCart}
+            addToWishlist={addToWishlist}
+            cart={cart}
+            wishlist={wishlist}
           />
         );
       case 'how-it-works':
         return <HowItWorksView />;
       case 'lookbook':
-        return <LookbookView />;
+        return <LookbookView homePhotos={homePhotos} />;
       case 'contact':
         return <ContactView />;
       case 'wallet':
-        return <WalletView settings={settings} />;
+        return <WalletView settings={settings} onOpenAuthModal={() => setAuthModalOpen(true)} />;
       case 'admin':
         return (
           <AdminView
@@ -322,13 +439,26 @@ export default function App() {
             setLeads={setLeads}
             settings={settings}
             setSettings={setSettings}
+            homePhotos={homePhotos}
+            setHomePhotos={setHomePhotos}
             orders={orders}
             setOrders={setOrders}
           />
         );
       default:
         // Fallback to Home
-        return <HomeView products={products} onOpenBookingModal={handleOpenBookingModal} settings={settings} />;
+        return (
+          <HomeView 
+            products={products} 
+            onOpenBookingModal={handleOpenBookingModal} 
+            settings={settings}
+            homePhotos={homePhotos}
+            addToCart={addToCart}
+            addToWishlist={addToWishlist}
+            cart={cart}
+            wishlist={wishlist}
+          />
+        );
     }
   };
 
@@ -337,7 +467,15 @@ export default function App() {
   return (
     <div className="app-container">
       {!isAdminRoute && (
-        <Navbar currentRoute={route} onOpenBookingModal={() => handleOpenBookingModal('')} />
+        <Navbar 
+          currentRoute={route} 
+          onOpenBookingModal={() => handleOpenBookingModal('')} 
+          cartCount={cart.length}
+          wishlistCount={wishlist.length}
+          onOpenAuthModal={() => setAuthModalOpen(true)}
+          onOpenWishlistModal={() => setWishlistModalOpen(true)}
+          onOpenCartModal={() => setCartModalOpen(true)}
+        />
       )}
       
       <main
@@ -367,6 +505,26 @@ export default function App() {
         isOpen={buyModalOpen}
         product={buyModalProduct}
         onClose={handleCloseBuyModal}
+      />
+
+      <AuthModal 
+        isOpen={authModalOpen} 
+        onClose={() => setAuthModalOpen(false)} 
+      />
+
+      <CartModal 
+        isOpen={cartModalOpen} 
+        onClose={() => setCartModalOpen(false)} 
+        cart={cart}
+        removeFromCart={removeFromCart}
+      />
+
+      <WishlistModal 
+        isOpen={wishlistModalOpen} 
+        onClose={() => setWishlistModalOpen(false)} 
+        wishlist={wishlist}
+        removeFromWishlist={removeFromWishlist}
+        addToCart={addToCart}
       />
     </div>
   );

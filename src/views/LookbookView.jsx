@@ -49,8 +49,8 @@ function LookbookCard({ item }) {
   );
 }
 
-export default function LookbookView() {
-  const items = [
+export default function LookbookView({ homePhotos }) {
+  const items = homePhotos?.lookbookItems || [
     { name: 'Yuktaa Bride', occ: 'Bridal Polki Look', img: '/assets/jewel_74.jpeg' },
     { name: 'Yuktaa Bride', occ: 'Reception Elegance', img: '/assets/jewel_66.jpeg' },
     { name: 'Yuktaa Bride', occ: 'Festive Glam', img: '/assets/jewel_67.jpeg' },
@@ -66,7 +66,7 @@ export default function LookbookView() {
       <section className="collection-hero">
         <div>
           <h1 className="brand-font">Lookbook</h1>
-          <p style={{ letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.85rem', color: 'var(--color-accent)', marginTop: '0.5rem' }}>
+          <p style={{ letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.85rem', color: '#ffffff', fontWeight: 600, opacity: 0.95, marginTop: '0.5rem' }}>
             Real Brides. Real Beauty.
           </p>
         </div>

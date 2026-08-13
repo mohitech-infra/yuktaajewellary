@@ -13,6 +13,8 @@ export default function AdminView({
   setLeads,
   settings,
   setSettings,
+  homePhotos,
+  setHomePhotos,
   orders = [],
   setOrders
 }) {
@@ -24,7 +26,82 @@ export default function AdminView({
   const [adminPassword, setAdminPassword] = useState(localStorage.getItem('yuktaa_admin_password') || '1234');
   const [isFetchingPassword, setIsFetchingPassword] = useState(false);
 
-  // Local state for Offer settings
+  // Local state for home & model photos CMS
+  const [localHomePhotos, setLocalHomePhotos] = useState(() => homePhotos || {
+    categories: [],
+    exploreCategories: [],
+    promoImages: [],
+    lookbookItems: []
+  });
+  const [isSavingHomePhotos, setIsSavingHomePhotos] = useState(false);
+  const [uploadingSlotKey, setUploadingSlotKey] = useState(null);
+
+  useEffect(() => {
+    if (homePhotos) {
+      setLocalHomePhotos(homePhotos);
+    }
+  }, [homePhotos]);
+
+  const handleSaveHomePhotos = async (e) => {
+    if (e) e.preventDefault();
+    setIsSavingHomePhotos(true);
+    try {
+      const { error } = await supabase
+        .from('admin_settings')
+        .upsert([{ key: 'home_photos_cms', value: JSON.stringify(localHomePhotos) }]);
+
+      if (error) throw error;
+
+      if (setHomePhotos) {
+        setHomePhotos(localHomePhotos);
+      }
+
+      triggerNotification('Home & Model Photos saved and published live!', 'success');
+    } catch (err) {
+      console.error('Failed to save home photos:', err);
+      if (setHomePhotos) {
+        setHomePhotos(localHomePhotos);
+      }
+      triggerNotification('Saved locally! (Offline mode / Local fallback)', 'info');
+    } finally {
+      setIsSavingHomePhotos(false);
+    }
+  };
+
+  const handleSingleImageUpload = async (file, onComplete, slotId = null) => {
+    if (!file) return;
+    if (slotId) setUploadingSlotKey(slotId);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `cms-${Math.random().toString(36).substring(2, 10)}-${Date.now()}.${fileExt}`;
+      const filePath = `products/${fileName}`;
+
+      const { error } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      onComplete(publicUrl);
+      triggerNotification('Image uploaded successfully!', 'success');
+    } catch (err) {
+      console.warn('Supabase storage upload failed. Converting to Base64 data URL.', err);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        onComplete(reader.result);
+        triggerNotification('Image processed & attached locally!', 'info');
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setUploadingSlotKey(null);
+    }
+  };
+
+  // Local state for offer 2000
   const [localVoucherCode, setLocalVoucherCode] = useState(settings?.welcome_voucher_code || 'YUKTAA2000');
   const [localVoucherAmount, setLocalVoucherAmount] = useState(settings?.welcome_voucher_amount || 2000);
   const [localMinBill, setLocalMinBill] = useState(settings?.welcome_voucher_min_bill || 6000);
@@ -860,6 +937,7 @@ export default function AdminView({
         <div className="admin-sidebar-menu" style={{ flexGrow: 1, padding: '1.5rem 0' }}>
           {[
             { id: 'dashboard', label: 'Overview Metrics', icon: 'fa-gauge-high' },
+            { id: 'home_photos', label: 'Home & Model Photos', icon: 'fa-camera-retro' },
             { id: 'products', label: 'Jewellery Inventory', icon: 'fa-gem' },
             { id: 'occasions', label: 'Occasions Banner', icon: 'fa-calendar-days' },
             { id: 'bookings', label: 'Bookings & Logs', icon: 'fa-book-bookmark' },
@@ -1094,6 +1172,429 @@ export default function AdminView({
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 1.5: Home & Model Photos CMS */}
+        {activeTab === 'home_photos' && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h2 className="brand-font" style={{ fontSize: '2.4rem', color: 'var(--color-primary)', margin: 0 }}>
+                  Home & Model Photos CMS
+                </h2>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem', marginTop: '0.3rem' }}>
+                  Upload & change model photos, category thumbnails, and lookbook pictures displayed on your home screen.
+                </p>
+              </div>
+
+              <button
+                onClick={handleSaveHomePhotos}
+                disabled={isSavingHomePhotos}
+                className="btn btn-accent btn-shimmer"
+                style={{
+                  height: '45px',
+                  padding: '0 1.8rem',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.6rem',
+                  fontSize: '0.95rem'
+                }}
+              >
+                <i className={`fa-solid ${isSavingHomePhotos ? 'fa-spinner fa-spin' : 'fa-floppy-disk'}`}></i>
+                {isSavingHomePhotos ? 'Publishing...' : 'Save & Publish Live'}
+              </button>
+            </div>
+
+            {/* SECTION 1: PROMO MODEL & JEWELLERY SHOWCASE GRID (4 PHOTOS) */}
+            <div style={{
+              backgroundColor: 'var(--color-white)',
+              border: '1px solid var(--color-border)',
+              borderRadius: '12px',
+              padding: '1.8rem',
+              marginBottom: '2rem',
+              boxShadow: 'var(--shadow-subtle)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.8rem' }}>
+                <div>
+                  <h3 className="brand-font" style={{ fontSize: '1.6rem', color: 'var(--color-primary)', margin: 0 }}>
+                    <i className="fa-solid fa-table-cells" style={{ marginRight: '0.6rem', color: 'var(--color-accent)' }}></i>
+                    Home Promo Model & Jewellery Grid (4 Photos)
+                  </h3>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                    These 4 featured photos are displayed directly under the "BUY ANY 2 FOR ₹2,650" offer banner on the Home Screen.
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.2rem' }}>
+                {[0, 1, 2, 3].map((slotIdx) => {
+                  const currentImg = localHomePhotos.promoImages?.[slotIdx] || '';
+                  const slotLabel = `Model & Set #${slotIdx + 1}`;
+                  return (
+                    <div key={slotIdx} style={{ border: '1px solid var(--color-border)', borderRadius: '8px', padding: '1rem', backgroundColor: '#fafafa', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--color-primary)' }}>{slotLabel}</span>
+                        <span style={{ fontSize: '0.75rem', backgroundColor: '#eef2ff', color: '#4338ca', padding: '0.1rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
+                          Slot {slotIdx + 1}
+                        </span>
+                      </div>
+
+                      <div style={{
+                        width: '100%',
+                        height: '180px',
+                        borderRadius: '6px',
+                        backgroundImage: `url(${currentImg})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundColor: '#e5e7eb',
+                        border: '1px solid #d1d5db',
+                        position: 'relative'
+                      }}>
+                        {!currentImg && (
+                          <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '0.85rem' }}>
+                            No Image Set
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.3rem' }}>
+                          Upload New Photo:
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleSingleImageUpload(e.target.files[0], (newUrl) => {
+                                setLocalHomePhotos((prev) => {
+                                  const updated = [...(prev.promoImages || ['/assets/jewel_74.jpeg', '/assets/jewel_66.jpeg', '/assets/jewel_67.jpeg', '/assets/jewel_68.jpeg'])];
+                                  updated[slotIdx] = newUrl;
+                                  return { ...prev, promoImages: updated };
+                                });
+                              }, `promo_${slotIdx}`);
+                            }
+                          }}
+                          style={{ fontSize: '0.8rem', width: '100%' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.3rem' }}>
+                          Or Paste Image URL:
+                        </label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={currentImg}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setLocalHomePhotos((prev) => {
+                              const updated = [...(prev.promoImages || [])];
+                              updated[slotIdx] = val;
+                              return { ...prev, promoImages: updated };
+                            });
+                          }}
+                          placeholder="https://..."
+                          style={{ height: '36px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* SECTION 2: QUICK CATEGORY ROW (TOP BAR 4 CATEGORIES) */}
+            <div style={{
+              backgroundColor: 'var(--color-white)',
+              border: '1px solid var(--color-border)',
+              borderRadius: '12px',
+              padding: '1.8rem',
+              marginBottom: '2rem',
+              boxShadow: 'var(--shadow-subtle)'
+            }}>
+              <h3 className="brand-font" style={{ fontSize: '1.6rem', color: 'var(--color-primary)', marginBottom: '0.4rem' }}>
+                <i className="fa-solid fa-tags" style={{ marginRight: '0.6rem', color: 'var(--color-accent)' }}></i>
+                Top Quick Category Row Photos
+              </h3>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                Manage the horizontal quick categories shown right under the main header on the home screen.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                {(localHomePhotos.categories || []).map((cat, idx) => (
+                  <div key={idx} style={{ border: '1px solid var(--color-border)', borderRadius: '8px', padding: '1rem', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                      <div style={{ width: '60px', height: '60px', borderRadius: '12px', backgroundImage: `url(${cat.img})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: '#eee', flexShrink: 0, border: '1px solid #ccc' }}></div>
+                      <div style={{ flexGrow: 1 }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', display: 'block' }}>Category Name</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={cat.name}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setLocalHomePhotos((prev) => {
+                              const updated = [...prev.categories];
+                              updated[idx] = { ...updated[idx], name: val };
+                              return { ...prev, categories: updated };
+                            });
+                          }}
+                          style={{ height: '34px', fontSize: '0.85rem', borderRadius: '4px' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.2rem' }}>Change Photo:</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) {
+                            handleSingleImageUpload(e.target.files[0], (newUrl) => {
+                              setLocalHomePhotos((prev) => {
+                                const updated = [...prev.categories];
+                                updated[idx] = { ...updated[idx], img: newUrl };
+                                return { ...prev, categories: updated };
+                              });
+                            }, `top_cat_${idx}`);
+                          }
+                        }}
+                        style={{ fontSize: '0.78rem', width: '100%' }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* SECTION 3: EXPLORE OUR RANGE CATEGORIES (10 CATEGORIES) */}
+            <div style={{
+              backgroundColor: 'var(--color-white)',
+              border: '1px solid var(--color-border)',
+              borderRadius: '12px',
+              padding: '1.8rem',
+              marginBottom: '2rem',
+              boxShadow: 'var(--shadow-subtle)'
+            }}>
+              <h3 className="brand-font" style={{ fontSize: '1.6rem', color: 'var(--color-primary)', marginBottom: '0.4rem' }}>
+                <i className="fa-solid fa-layer-group" style={{ marginRight: '0.6rem', color: 'var(--color-accent)' }}></i>
+                Explore Our Range Categories Grid
+              </h3>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                Manage all 10 category cards displayed in the "EXPLORE OUR RANGE OF JEWELLERY" section.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                {(localHomePhotos.exploreCategories || []).map((cat, idx) => (
+                  <div key={idx} style={{ border: '1px solid var(--color-border)', borderRadius: '8px', padding: '1rem', backgroundColor: '#fafafa', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    <div style={{ width: '100%', height: '140px', borderRadius: '6px', backgroundImage: `url(${cat.img})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: '#eee', border: '1px solid #ddd' }}></div>
+
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>Title</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={cat.name}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setLocalHomePhotos((prev) => {
+                            const updated = [...prev.exploreCategories];
+                            updated[idx] = { ...updated[idx], name: val };
+                            return { ...prev, exploreCategories: updated };
+                          });
+                        }}
+                        style={{ height: '34px', fontSize: '0.85rem', borderRadius: '4px' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.2rem' }}>Upload New Photo:</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) {
+                            handleSingleImageUpload(e.target.files[0], (newUrl) => {
+                              setLocalHomePhotos((prev) => {
+                                const updated = [...prev.exploreCategories];
+                                updated[idx] = { ...updated[idx], img: newUrl };
+                                return { ...prev, exploreCategories: updated };
+                              });
+                            }, `explore_cat_${idx}`);
+                          }
+                        }}
+                        style={{ fontSize: '0.78rem', width: '100%' }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* SECTION 4: LOOKBOOK REAL BRIDES & MODEL GALLERY */}
+            <div style={{
+              backgroundColor: 'var(--color-white)',
+              border: '1px solid var(--color-border)',
+              borderRadius: '12px',
+              padding: '1.8rem',
+              marginBottom: '2rem',
+              boxShadow: 'var(--shadow-subtle)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <h3 className="brand-font" style={{ fontSize: '1.6rem', color: 'var(--color-primary)', margin: 0 }}>
+                    <i className="fa-solid fa-images" style={{ marginRight: '0.6rem', color: 'var(--color-accent)' }}></i>
+                    Lookbook Model Gallery Photos
+                  </h3>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                    Manage photos shown in the Real Brides / Lookbook page.
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocalHomePhotos((prev) => ({
+                      ...prev,
+                      lookbookItems: [
+                        ...(prev.lookbookItems || []),
+                        { name: 'Yuktaa Bride', occ: 'New Glam Look', img: '/assets/jewel_74.jpeg' }
+                      ]
+                    }));
+                  }}
+                  className="btn btn-secondary"
+                  style={{ height: '38px', padding: '0 1.2rem', fontSize: '0.85rem', gap: '0.4rem', borderRadius: '6px' }}
+                >
+                  <i className="fa-solid fa-plus"></i> Add Model Photo
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.2rem' }}>
+                {(localHomePhotos.lookbookItems || []).map((item, idx) => (
+                  <div key={idx} style={{ border: '1px solid var(--color-border)', borderRadius: '8px', padding: '1rem', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    <div style={{ width: '100%', height: '180px', borderRadius: '6px', backgroundImage: `url(${item.img})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: '#eee', border: '1px solid #ddd' }}></div>
+
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>Title / Name</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={item.name}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setLocalHomePhotos((prev) => {
+                            const updated = [...prev.lookbookItems];
+                            updated[idx] = { ...updated[idx], name: val };
+                            return { ...prev, lookbookItems: updated };
+                          });
+                        }}
+                        style={{ height: '34px', fontSize: '0.85rem', borderRadius: '4px' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>Occasion Tag</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={item.occ}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setLocalHomePhotos((prev) => {
+                            const updated = [...prev.lookbookItems];
+                            updated[idx] = { ...updated[idx], occ: val };
+                            return { ...prev, lookbookItems: updated };
+                          });
+                        }}
+                        style={{ height: '34px', fontSize: '0.85rem', borderRadius: '4px' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.2rem' }}>Upload Photo:</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) {
+                            handleSingleImageUpload(e.target.files[0], (newUrl) => {
+                              setLocalHomePhotos((prev) => {
+                                const updated = [...prev.lookbookItems];
+                                updated[idx] = { ...updated[idx], img: newUrl };
+                                return { ...prev, lookbookItems: updated };
+                              });
+                            }, `lookbook_${idx}`);
+                          }
+                        }}
+                        style={{ fontSize: '0.78rem', width: '100%' }}
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLocalHomePhotos((prev) => ({
+                          ...prev,
+                          lookbookItems: prev.lookbookItems.filter((_, i) => i !== idx)
+                        }));
+                      }}
+                      style={{
+                        backgroundColor: 'transparent',
+                        border: '1px solid #ef4444',
+                        color: '#ef4444',
+                        borderRadius: '4px',
+                        padding: '0.4rem',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.4rem',
+                        marginTop: '0.4rem'
+                      }}
+                    >
+                      <i className="fa-solid fa-trash"></i> Remove Photo
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* SECTION 5: SHORTCUT TO JEWELLERY INVENTORY PHOTOS */}
+            <div style={{
+              backgroundColor: '#fef3c7',
+              border: '1px solid #fde68a',
+              borderRadius: '12px',
+              padding: '1.5rem 1.8rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem'
+            }}>
+              <div>
+                <h4 style={{ color: '#92400e', fontSize: '1.1rem', margin: 0, fontWeight: 700 }}>
+                  <i className="fa-solid fa-gem" style={{ marginRight: '0.5rem' }}></i>
+                  Want to change individual Jewellery product photos?
+                </h4>
+                <p style={{ color: '#b45309', fontSize: '0.88rem', margin: '0.3rem 0 0 0' }}>
+                  To add, edit, or upload multiple photos for specific jewellery sets or products in your rental catalog, use the Jewellery Inventory tab.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('products')}
+                className="btn btn-accent"
+                style={{ padding: '0.6rem 1.4rem', borderRadius: '6px', fontSize: '0.88rem' }}
+              >
+                Go to Jewellery Inventory
+              </button>
             </div>
           </div>
         )}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 
-export default function WalletView({ settings }) {
+export default function WalletView({ settings, onOpenAuthModal }) {
   const [isClaimed, setIsClaimed] = useState(false);
   const [userName, setUserName] = useState('');
   const [formData, setFormData] = useState({ name: '', phone: '' });
@@ -104,7 +104,7 @@ export default function WalletView({ settings }) {
       <section className="collection-hero" style={{ height: '220px' }}>
         <div>
           <h1 className="brand-font">Yuktaa Wallet</h1>
-          <p style={{ letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.85rem', color: 'var(--color-accent)', marginTop: '0.5rem' }}>
+          <p style={{ letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.85rem', color: '#ffffff', fontWeight: 600, opacity: 0.95, marginTop: '0.5rem' }}>
             Exclusive Rental Credits & Perks
           </p>
         </div>
@@ -119,33 +119,35 @@ export default function WalletView({ settings }) {
             <div className="wallet-card-column">
               
               {/* Premium Digital Card */}
-              <div className={`digital-wallet-card ${isClaimed ? 'active-card' : 'inactive-card'}`}>
-                <div className="card-header-row">
-                  <div className="card-brand">YUKTAA</div>
-                  <div className="card-network-chip">
-                    <div className="gold-chip-line"></div>
-                    <div className="gold-chip-line"></div>
+              {isClaimed && (
+                <div className={`digital-wallet-card active-card`}>
+                  <div className="card-header-row">
+                    <div className="card-brand">YUKTAA</div>
+                    <div className="card-network-chip">
+                      <div className="gold-chip-line"></div>
+                      <div className="gold-chip-line"></div>
+                    </div>
+                  </div>
+
+                  <div className="card-number-mock">•••• •••• •••• 2026</div>
+
+                  <div className="card-balance-block">
+                    <span className="card-balance-label">AVAILABLE CREDIT</span>
+                    <span className="card-balance-amount">₹{(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')}.00</span>
+                  </div>
+
+                  <div className="card-footer-row">
+                    <div className="card-holder-info">
+                      <span className="card-holder-label">VALUED MEMBER</span>
+                      <span className="card-holder-name">{userName}</span>
+                    </div>
+                    <div className="card-expiry-info">
+                      <span className="card-holder-label">VALID THRU</span>
+                      <span className="card-holder-name">06/27</span>
+                    </div>
                   </div>
                 </div>
-
-                <div className="card-number-mock">•••• •••• •••• 2026</div>
-
-                <div className="card-balance-block">
-                  <span className="card-balance-label">AVAILABLE CREDIT</span>
-                  <span className="card-balance-amount">{isClaimed ? `₹${(settings?.welcome_voucher_amount || 2000).toLocaleString('en-IN')}.00` : '₹0.00'}</span>
-                </div>
-
-                <div className="card-footer-row">
-                  <div className="card-holder-info">
-                    <span className="card-holder-label">VALUED MEMBER</span>
-                    <span className="card-holder-name">{isClaimed ? userName : 'Celebration Guest'}</span>
-                  </div>
-                  <div className="card-expiry-info">
-                    <span className="card-holder-label">VALID THRU</span>
-                    <span className="card-holder-name">06/27</span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Status Message */}
               <div className="wallet-status-box">
@@ -210,6 +212,34 @@ export default function WalletView({ settings }) {
                       Unlock Welcome Bonus
                     </button>
                   </form>
+
+                  {onOpenAuthModal && (
+                    <div style={{ textAlign: 'center', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px dashed #e0e0e0' }}>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '0.6rem' }}>
+                        Already registered or have an account?
+                      </p>
+                      <button 
+                        type="button" 
+                        onClick={onOpenAuthModal}
+                        style={{ 
+                          width: '100%', 
+                          padding: '0.8rem', 
+                          backgroundColor: 'transparent', 
+                          border: '1.5px solid var(--color-primary)', 
+                          color: 'var(--color-primary)', 
+                          borderRadius: '8px', 
+                          fontWeight: 700, 
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        <i className="fa-regular fa-user"></i> Sign In / Login Pop-Up
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="redemption-guide-card">
